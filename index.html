@@ -189,9 +189,22 @@ canvas{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
 @keyframes puPop{0%{transform:scale(0) rotate(-10deg);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
 .fadeIn{animation:fadeIn .3s ease forwards;}
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:3px;}
+/* Admin panel */
+#screen-admin{background:#0a0a1a;flex-direction:column;padding-top:60px;}
+.admin-inner{width:100%;max-width:760px;overflow-y:auto;max-height:calc(100vh-80px);padding:24px;display:flex;flex-direction:column;gap:28px;}
+.admin-section{background:rgba(255,255,255,0.04);border:2px solid rgba(255,69,0,0.3);padding:22px;display:flex;flex-direction:column;gap:14px;}
+.admin-section-title{font-family:'Boogaloo',cursive;font-size:22px;color:#ff6b35;}
+.admin-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.admin-btn{font-family:'Boogaloo',cursive;font-size:17px;padding:9px 22px;border:none;cursor:pointer;transition:opacity .12s;}
+.admin-btn:hover{opacity:.8;}
+.admin-btn-gold{background:#ffd700;color:#1a1a1a;}
+.admin-btn-red{background:#e63946;color:#fff;}
+.admin-feedback{font-size:13px;color:rgba(255,255,255,0.5);min-height:18px;}
+.admin-level-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:8px 12px;margin-bottom:6px;}
+.admin-level-name{font-family:'Boogaloo',cursive;font-size:17px;color:#fff;flex:1;}
+.admin-level-meta{font-size:12px;color:rgba(255,255,255,0.4);}
+.admin-del-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:4px 14px;background:var(--red);color:#fff;border:none;cursor:pointer;}
+
 </style>
 </head>
 <body>
@@ -227,6 +240,7 @@ canvas{display:block;}
       <button class="menu-btn btn-shop" onclick="showShop()">🛒 SHOP</button>
       <button class="menu-btn" style="background:var(--orange);color:#fff;" onclick="showCommunity()">🌍 COMMUNITY</button>
       <button class="menu-btn" style="background:var(--pink);color:#fff;" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
+      <button class="menu-btn" id="admin-menu-btn" style="background:#ff4500;color:#fff;display:none;" onclick="showAdmin()">👑 ADMIN</button>
     </div>
   </div>
 </div>
@@ -377,6 +391,37 @@ canvas{display:block;}
   </div>
 </div>
 
+<!-- ADMIN PANEL -->
+<div id="screen-admin" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showMenu()">← BACK</button>
+    <span class="header-title">👑 ADMIN PANEL</span>
+    <span style="font-family:'Boogaloo',cursive;font-size:13px;color:#ff4500;padding:0 12px">YNSTEYN ONLY</span>
+  </div>
+  <div class="admin-inner" id="admin-inner">
+    <div class="admin-section">
+      <div class="admin-section-title">🪙 Give Coins to Everyone</div>
+      <div class="admin-row">
+        <input class="dialog-input" id="admin-coins-amount" type="number" min="1" max="1000000" placeholder="Amount..." style="width:180px;font-size:18px">
+        <button class="admin-btn admin-btn-gold" onclick="adminGiveCoins()">GIVE TO ALL</button>
+      </div>
+      <div class="admin-feedback" id="admin-coins-feedback"></div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-title">🚫 Ban a Player</div>
+      <div class="admin-row">
+        <input class="dialog-input" id="admin-ban-username" type="text" placeholder="Username..." style="width:220px;font-size:18px" maxlength="20">
+        <button class="admin-btn admin-btn-red" onclick="adminBanPlayer()">BAN PLAYER</button>
+      </div>
+      <div class="admin-feedback" id="admin-ban-feedback"></div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-section-title">🗑 Delete a Level</div>
+      <div id="admin-levels-list"><div class="comm-loading">Loading levels...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- SAVE DIALOG -->
 <div id="save-dialog">
   <div class="dialog-box">
@@ -423,6 +468,7 @@ const SKINS=[
   {id:'pirate',  name:"Cap'n Jack",   price:10000,  colors:{body:'#f4a261',shirt:'#b5451b',pants:'#3d2b1f',shoe:'#2b2b2b',hair:'#2b2b2b'}},
   {id:'ghost',   name:'Boo',          price:50000,  colors:{body:'rgba(255,255,255,0.7)',shirt:'rgba(200,200,255,0.5)',pants:'rgba(180,180,220,0.5)',shoe:'rgba(150,150,200,0.5)',hair:'rgba(255,255,255,0.4)'}},
   {id:'devil',   name:'El Diablo',    price:100000, colors:{body:'#e63946',shirt:'#9d0208',pants:'#370617',shoe:'#1a0000',hair:'#ff4500'}},
+  {id:'admin',   name:'👑 The Admin',  price:0,      colors:{body:'#ffd700',shirt:'#ff4500',pants:'#1a1a1a',shoe:'#ff4500',hair:'#ffd700'}, adminOnly:true},
 ];
 
 // =============================================
@@ -490,7 +536,7 @@ function buildStoryUI(){
     grid.className='level-grid';
     world.levels.forEach(lv=>{
       const card=document.createElement('div');
-      const unlocked=lv.num<=s.storyProgress+1;
+      const unlocked=isAdmin() || lv.num<=s.storyProgress+1;
       const completed=!!s.storyStars[lv.num];
       card.className='level-card'+(unlocked?'':' locked')+(completed?' completed':'');
       card.style.borderColor=world.color;
@@ -564,6 +610,8 @@ function buildShopUI(){
   const grid=document.getElementById('shop-grid');
   grid.innerHTML='';
   SKINS.forEach(skin=>{
+    // Admin skin only visible to admin
+    if(skin.adminOnly && !isAdmin()) return;
     const card=document.createElement('div');
     card.className='skin-card';
     const sc=document.createElement('canvas');
@@ -659,7 +707,7 @@ function defaultPlayer(){
     onGround:false,facingRight:true,dead:false,won:false,
     animT:0,skin,jumpBuffer:0,coyoteTime:0,
     _onIce:false,canDoubleJump:false,usedDoubleJump:false,
-    wallSliding:false,
+    wallSliding:false,_tpCooldown:0,
   };
 }
 
@@ -682,6 +730,10 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum){
   G.isStoryMode=isStory;
   G.storyLevelNum=storyNum;
   if(isStory&&storyNum) G.worldTheme=Math.floor((storyNum-1)/5);
+  // Track community play count at START of play (not just on win)
+  // currentCommunityLevelId is set before this call for community levels; clear it for others
+  if(isStory||!playOnly) currentCommunityLevelId=null;
+  if(currentCommunityLevelId) incrementPlayCount(currentCommunityLevelId).catch(()=>{});
 
   const saveBtn=document.getElementById('save-btn');
   const modeBtn=document.getElementById('mode-toggle-btn');
@@ -991,23 +1043,17 @@ function updatePlayer(){
   const pmr=Math.floor((p.y+p.h/2)/TILE),pmc=Math.floor((p.x+p.w/2)/TILE);
   G.inWater=isWater(pmr,pmc)||isWater(pmr+1,pmc);
 
-  // Hazard tiles
+  // Hazard tiles — gather all corners first, resolve once so shield isn't double-consumed
   const pc=Math.floor((p.x+p.w/2)/TILE),pr=Math.floor((p.y+p.h-1)/TILE);
-  if(pr>=0&&pr<LEVEL_ROWS&&pc>=0&&pc<LEVEL_COLS){
-    const t=G.grid[pr][pc];
-    if(t&&(t.type===2||t.type===7)&&G.powerup!=='shield') killPlayer();
-    else if(t&&(t.type===2||t.type===7)&&G.powerup==='shield'){G.powerup=null;G.powerupTimer=0;updatePowerupHUD();spawnParticles(p.x+p.w/2,p.y,'#4cc9f0',15);}
+  let hitHazard=false;
+  const _hcorners=[[pr,pc],[Math.floor(p.y/TILE),Math.floor(p.x/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor(p.x/TILE)],[Math.floor(p.y/TILE),Math.floor((p.x+p.w-1)/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor((p.x+p.w-1)/TILE)]];
+  for(const [hr,hc] of _hcorners){
+    if(hr>=0&&hr<LEVEL_ROWS&&hc>=0&&hc<LEVEL_COLS){const ht=G.grid[hr][hc];if(ht&&(ht.type===2||ht.type===7)){hitHazard=true;break;}}
   }
-  [[Math.floor(p.y/TILE),Math.floor(p.x/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor(p.x/TILE)],
-   [Math.floor(p.y/TILE),Math.floor((p.x+p.w-1)/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor((p.x+p.w-1)/TILE)]].forEach(([r,c])=>{
-    if(r>=0&&r<LEVEL_ROWS&&c>=0&&c<LEVEL_COLS){
-      const t=G.grid[r][c];
-      if(t&&(t.type===2||t.type===7)){
-        if(G.powerup==='shield'){G.powerup=null;G.powerupTimer=0;updatePowerupHUD();spawnParticles(p.x+p.w/2,p.y,'#4cc9f0',15);}
-        else killPlayer();
-      }
-    }
-  });
+  if(hitHazard){
+    if(G.powerup==='shield'){G.powerup=null;G.powerupTimer=0;updatePowerupHUD();spawnParticles(p.x+p.w/2,p.y,'#4cc9f0',15);}
+    else killPlayer();
+  }
   if(p.y>LEVEL_ROWS*TILE+TILE) killPlayer();
 
   // Checkpoint
@@ -1020,27 +1066,37 @@ function updatePlayer(){
   }
   // Goal
   if(pmid>=0&&pmid<LEVEL_ROWS&&G.grid[pmid]&&G.grid[pmid][pc]&&G.grid[pmid][pc].type===5) winPlayer();
-  // Door — open if player has key and touches door
-  if(!G.doorOpen&&G.hasKey&&pmid>=0&&pmid<LEVEL_ROWS&&G.grid[pmid]&&G.grid[pmid][pc]&&G.grid[pmid][pc].type===20){
-    G.doorOpen=true;spawnParticles(p.x+p.w/2,p.y,'#ffd60a',20);
-  }
-  // Teleporter
-  for(let r2=0;r2<LEVEL_ROWS;r2++) for(let c2=0;c2<LEVEL_COLS;c2++){
-    const t=G.grid[r2][c2];
-    if(!t)continue;
-    if((t.type===17||t.type===18)&&Math.abs(p.x-c2*TILE)<24&&Math.abs(p.y-r2*TILE)<24){
-      const targetType=t.type===17?18:17;
-      for(let tr=0;tr<LEVEL_ROWS;tr++) for(let tc=0;tc<LEVEL_COLS;tc++){
-        const dest=G.grid[tr][tc];
-        if(dest&&dest.type===targetType&&(tr!==r2||tc!==c2)){
-          p.x=tc*TILE+4;p.y=tr*TILE;p.vy=0;
-          spawnParticles(p.x+p.w/2,p.y+p.h/2,'#c77dff',20);
-          G.grid[r2][c2]._cooldown=90; // prevent instant re-teleport
-          goto_break:break;
-        }
+  // Door — open if player has key and any corner touches door tile
+  if(!G.doorOpen&&G.hasKey){
+    const _dcorners=[[Math.floor(p.y/TILE),Math.floor(p.x/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor(p.x/TILE)],[Math.floor(p.y/TILE),Math.floor((p.x+p.w-1)/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor((p.x+p.w-1)/TILE)],[pmid,pc]];
+    for(const [dr,dc] of _dcorners){
+      if(dr>=0&&dr<LEVEL_ROWS&&dc>=0&&dc<LEVEL_COLS&&G.grid[dr]&&G.grid[dr][dc]&&G.grid[dr][dc].type===20){
+        G.doorOpen=true;spawnParticles(p.x+p.w/2,p.y,'#ffd60a',20);break;
       }
     }
   }
+  // Teleporter — per-player cooldown prevents instant bounce-back
+  if(!p._tpCooldown||p._tpCooldown<=0){
+    let teleported=false;
+    outer:for(let r2=0;r2<LEVEL_ROWS&&!teleported;r2++) for(let c2=0;c2<LEVEL_COLS&&!teleported;c2++){
+      const t=G.grid[r2][c2];
+      if(!t||(t.type!==17&&t.type!==18))continue;
+      // Check if player CENTER overlaps this tile
+      const tileX=c2*TILE,tileY=r2*TILE;
+      const pcx=p.x+p.w/2,pcy=p.y+p.h/2;
+      if(pcx<tileX||pcx>tileX+TILE||pcy<tileY||pcy>tileY+TILE)continue;
+      // Find the paired tile
+      const targetType=t.type===17?18:17;
+      for(let tr=0;tr<LEVEL_ROWS&&!teleported;tr++) for(let tc=0;tc<LEVEL_COLS&&!teleported;tc++){
+        const dest=G.grid[tr][tc];
+        if(!dest||dest.type!==targetType||( tr===r2&&tc===c2))continue;
+        p.x=tc*TILE+(TILE-p.w)/2;p.y=tr*TILE;p.vy=0;
+        p._tpCooldown=60;
+        spawnParticles(p.x+p.w/2,p.y+p.h/2,'#c77dff',20);
+        teleported=true;
+      }
+    }
+  } else { p._tpCooldown--; }
 
   // Coins + powerups
   G.coins.forEach(coin=>{
@@ -1145,8 +1201,6 @@ function winPlayer(){
   }
   writeSave(s);updateCoinDisplays();
   setTimeout(syncCoinsToLeaderboard,800);
-  // Increment play count for community levels (best effort)
-  if(currentCommunityLevelId) incrementPlayCount(currentCommunityLevelId).catch(()=>{});
 }
 
 function updatePowerupHUD(){
@@ -1718,6 +1772,21 @@ function drawPlayer(){
     spawnParticles(p.x+(p.facingRight?p.w:0),p.y+p.h*0.6,'#fff',1);
   }
   ctx.restore();
+  // Admin crown — drawn above the player in screen space
+  if(p.skin.id==='admin'){
+    ctx.save();
+    ctx.translate(p.x+p.w/2, p.y);
+    ctx.scale(mushScale, mushScale);
+    ctx.fillStyle='#ffd700';
+    // Crown base
+    ctx.fillRect(-10,-32,20,8);
+    // Crown points
+    ctx.beginPath();ctx.moveTo(-10,-32);ctx.lineTo(-14,-42);ctx.lineTo(-5,-34);ctx.lineTo(0,-44);ctx.lineTo(5,-34);ctx.lineTo(14,-42);ctx.lineTo(10,-32);ctx.closePath();ctx.fill();
+    // Gems on crown
+    ctx.fillStyle='#e63946';ctx.beginPath();ctx.arc(-5,-29,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4cc9f0';ctx.beginPath();ctx.arc(5,-29,2.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
 }
 
 function drawParticles(){
@@ -1870,8 +1939,8 @@ function generateStoryLevel(num){
   // Player: vx=4, vy=-11.5, gravity=0.48. Max horizontal range per jump ≈ 9 tiles.
   // With difficulty-based gap, keep hard cap at 4 so it's always clearable.
   // Rise cap at 3 rows (4 rows requires a bounce pad, which we add explicitly).
-  const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));   // was min(6,…*0.35) — now capped at 4
-  const maxRiseY=Math.min(3,1+Math.floor(difficulty*0.2));   // was min(4,…*0.25) — now capped at 3
+  const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));   // hard cap 4: always jumpable
+  const maxRiseY=Math.min(2,1+Math.floor(difficulty*0.15)); // hard cap 2: rise3 is physically impossible
   const minPlatLen=Math.max(3,5-Math.floor(difficulty*0.3)); // slightly longer minimum platforms
   const maxPlatLen=Math.max(4,7-Math.floor(difficulty*0.3));
   const numPlatforms=10+difficulty*2;
@@ -1913,14 +1982,13 @@ function generateStoryLevel(num){
     const safeLen=Math.min(len, PLACE_LIMIT-cx);
     if(safeLen<2){cx+=safeLen;continue;} // too tight, skip
 
-    // Tile type
+    // Tile type for platform (ice worlds get slippery tiles)
     let platType=1;
     if(worldIdx===2&&r()<0.5)platType=9;
     else if(worldIdx===6&&r()<0.3)platType=9;
-    else r(); // consume so RNG stays on track for worlds that don't use this
+    else r(); // consume RNG for worlds that don't use platType variant
 
-    // Moving platforms — only if: world>=3, gap is reasonable, prev wasn't moving
-    // BUG FIX: was unconditional, causing chains of moving platforms with big gaps
+    // Moving platforms — low probability, no consecutive moving, only small gaps
     const wantMoving=worldIdx>=3&&r()<0.15&&safeLen>=3&&!prevWasMoving&&dx<=3;
     if(wantMoving){
       grid[cy][cx]={type:16,color:pc[0]};
@@ -1932,33 +2000,34 @@ function generateStoryLevel(num){
       prevWasMoving=false;
     }
 
-    // One-way platforms — only on normal platforms (not moving), world 2+
-    if(!wantMoving&&worldIdx>=1&&r()<0.18&&safeLen>=3&&cx+2<PLACE_LIMIT){
+    // One-way platform overlay — only on solid (not moving) platforms, world 2+
+    const isOneWayPlat=!wantMoving&&worldIdx>=1&&r()<0.18&&safeLen>=3&&cx+2<PLACE_LIMIT;
+    if(isOneWayPlat){
       for(let j=0;j<safeLen;j++) if(cx+j<PLACE_LIMIT) grid[cy][cx+j]={type:15,color:pc[0]};
     } else if(worldIdx>=1) r(); // consume RNG
 
-    // Coins above platform
-    if(r()<0.80-difficulty*0.02){
+    // Coins above platform (skip if one-way — visual clutter and hard to collect)
+    if(!isOneWayPlat&&r()<0.80-difficulty*0.02){
       for(let j=0;j<safeLen;j++){
         if(r()<0.5&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
       }
-    }
+    } else if(!isOneWayPlat) r();
 
-    // Power-ups (rare, on platform surface)
+    // Power-ups (rare, float above platform)
     if(r()<0.10&&cy-1>=0&&cx+Math.floor(safeLen/2)<PLACE_LIMIT){
       const puRoll=r();
       const pu=puRoll<0.45?21:puRoll<0.75?22:23;
       grid[cy-1][cx+Math.floor(safeLen/2)]={type:pu,color:TILE_COLORS[pu]};
     }
 
-    // Checkpoint at mid-level
-    if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&safeLen>=3){
+    // Checkpoint at mid-level (placed on solid surface tile, not on enemy/coin row)
+    if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&safeLen>=3&&!wantMoving&&!isOneWayPlat){
       grid[cy][cx+Math.floor(safeLen/2)]={type:13,color:'#ffd60a'};
     }
 
-    // Teleporters (world 4+) — only when there's still room ahead
+    // Teleporters (world 4+, only when enough room remains for the pair)
     if(worldIdx>=3&&!hasKeyDoor&&r()<0.10&&cx+safeLen+8<PLACE_LIMIT-4){
-      grid[cy-1][cx]={type:17,color:'#c77dff'};
+      if(cy-1>=0) grid[cy-1][cx]={type:17,color:'#c77dff'};
       const pairC=cx+safeLen+4;
       if(cy-1>=0&&pairC<PLACE_LIMIT) grid[cy-1][pairC]={type:18,color:'#7b2d8b'};
     } else if(worldIdx>=3) r();
@@ -1973,42 +2042,46 @@ function generateStoryLevel(num){
       doorPlaced=true;
     }
 
-    // --- ENEMIES (only when platform has room, and cx is safely in bounds) ---
-    // BUG FIX: previously goombas spawned even at cx=68 (the piled zone)
-    // causing many goombas stacked together that bounce off each other rapidly.
-    const safeEnemy=cx+1<PLACE_LIMIT;
+    // Enemies — never on moving or one-way platforms (they'd fall off immediately)
+    const safeEnemy=cx+1<PLACE_LIMIT&&!wantMoving&&!isOneWayPlat;
     if(difficulty>=2&&r()<0.22&&safeLen>=3&&safeEnemy) grid[cy-1][cx+1]={type:4,color:pc[0]};
-    if(worldIdx>=4&&r()<0.15&&safeLen>=4&&safeEnemy) grid[cy-2][cx+1]={type:11,color:pc[0]};
+    if(worldIdx>=4&&r()<0.15&&safeLen>=4&&safeEnemy&&cy-2>=0) grid[cy-2][cx+1]={type:11,color:pc[0]};
     if(worldIdx>=4&&r()<0.12&&safeEnemy) grid[cy-1][cx+Math.floor(safeLen/2)]={type:24,color:'#6d6875'};
     if(worldIdx>=1&&r()<0.10&&safeLen>=3&&safeEnemy) grid[cy-1][cx]={type:25,color:'#4d908e'};
 
-    // Spikes (not on moving platform, and only mid-platform)
-    if(!wantMoving&&difficulty>=4&&r()<0.18&&safeLen>=4){
-      const sp=1+Math.floor(r()*(safeLen-2));
+    // Spikes — only on solid platforms, only in middle (never on first/last tile so player can land)
+    if(!wantMoving&&!isOneWayPlat&&difficulty>=4&&r()<0.18&&safeLen>=5){
+      const sp=2+Math.floor(r()*(safeLen-4)); // keep edges clear
       if(cx+sp<PLACE_LIMIT) grid[cy][cx+sp]={type:2,color:'#ccc'};
     } else if(difficulty>=4) r();
 
-    // Lava gaps in floor
+    // Lava gaps in floor between platforms
     if(worldIdx>=1&&r()<0.22&&cx>12){
       for(let lc=cx-2;lc<cx&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
     }
 
-    // Bounce pad (helpful on high-rise platforms, required when rise==maxRiseY)
+    // Bounce pad — placed LAST so nothing overwrites it; only on solid platforms
+    // Required when rise is maximum (player needs extra height)
     const needsBounce=dy<=-maxRiseY;
-    if(worldIdx>=2&&(needsBounce||r()<0.25)&&cx<PLACE_LIMIT-2) grid[cy][cx]={type:6,color:'#3a86ff'};
-    else if(worldIdx>=2) r();
+    if(!wantMoving&&!isOneWayPlat&&worldIdx>=2&&(needsBounce||r()<0.20)&&cx<PLACE_LIMIT-2){
+      grid[cy][cx]={type:6,color:'#3a86ff'};
+    } else if(worldIdx>=2) r();
 
-    // Arrow block
-    if(worldIdx>=3&&r()<0.18&&safeLen>=2&&cx<PLACE_LIMIT-1) grid[cy][cx]={type:8,color:'#fb5607'};
-
-    // Dropper
-    if(worldIdx>=4&&r()<0.18&&cx+2<PLACE_LIMIT){
-      const dr=Math.max(0,cy-4);
-      if(dr>=0) grid[dr][cx+Math.floor(safeLen/2)]={type:10,color:'#ff006e'};
+    // Arrow block — world 3+, placed LAST on first tile
+    if(!wantMoving&&!isOneWayPlat&&worldIdx>=3&&r()<0.15&&safeLen>=2&&cx<PLACE_LIMIT-1){
+      grid[cy][cx]={type:8,color:'#fb5607'};
     }
 
-    // Cannon (world 6+)
-    if(worldIdx>=5&&r()<0.18&&cx+3<PLACE_LIMIT) grid[cy-1][cx+Math.floor(safeLen/2)]={type:12,color:'#06d6a0'};
+    // Dropper (hangs from ceiling)
+    if(worldIdx>=4&&r()<0.18&&cx+2<PLACE_LIMIT){
+      const dr=Math.max(0,cy-4);
+      grid[dr][cx+Math.floor(safeLen/2)]={type:10,color:'#ff006e'};
+    }
+
+    // Cannon — world 6+, placed on platform surface
+    if(!wantMoving&&worldIdx>=5&&r()<0.18&&cx+3<PLACE_LIMIT&&safeLen>=3){
+      grid[cy-1][cx+Math.floor(safeLen/2)]={type:12,color:'#06d6a0'};
+    }
 
     cx=cx+safeLen;
   }
@@ -2020,16 +2093,21 @@ function generateStoryLevel(num){
     }
   }
 
-  // Filler bridge: if there's a gap >4 tiles between last platform and end zone,
-  // add a connecting platform at a safe height
+  // Filler bridge: connect last platform to end zone with stepping platforms
+  // Each stepping platform is at most 2 rows below the previous one
   const endStart=LEVEL_COLS-9;
+  const endRow=LEVEL_ROWS-3; // height of the end platform
   if(endStart-cx>4){
-    // Place one or two stepping platforms to bridge the gap
-    const mid1C=cx+Math.floor((endStart-cx)*0.4);
-    const mid2C=cx+Math.floor((endStart-cx)*0.72);
-    const midR=Math.max(5,Math.min(LEVEL_ROWS-4,cy));
-    if(mid1C+3<endStart) for(let j=0;j<4;j++) if(mid1C+j<endStart) grid[midR][mid1C+j]={type:1,color:pc[0]};
-    if(mid2C+3<endStart) for(let j=0;j<4;j++) if(mid2C+j<endStart) grid[midR][mid2C+j]={type:1,color:pc[0]};
+    const totalGap=endStart-cx;
+    // Place up to 3 bridge platforms spaced evenly
+    const steps=Math.min(3,Math.floor(totalGap/5));
+    for(let s=1;s<=steps;s++){
+      const bx=cx+Math.floor(totalGap*(s/(steps+1)));
+      // Interpolate height from cy down toward endRow, max 2 rows per step
+      const targetRow=cy+Math.round((endRow-cy)*(s/(steps+1)));
+      const br=Math.max(4,Math.min(LEVEL_ROWS-4,targetRow));
+      if(bx+3<endStart) for(let j=0;j<4;j++) if(bx+j<endStart) grid[br][bx+j]={type:1,color:pc[0]};
+    }
   }
 
   return{name:`Level ${num}`,grid};
@@ -2099,6 +2177,8 @@ async function doLogin(){
   if(!username||username.length<2){errEl.textContent='Username must be at least 2 characters.';return;}
   if(!password||password.length<4){errEl.textContent='Password must be at least 4 characters.';return;}
   if(!/^[a-zA-Z0-9_]+$/.test(username)){errEl.textContent='Username: letters, numbers, underscores only.';return;}
+  // Block impersonation of admin
+  if(username.toLowerCase()==='ynsteyn'&&loginIsRegister){errEl.textContent='That username is reserved.';return;}
   btn.textContent='...';btn.disabled=true;
   try{
     const hash=simpleHash(password);
@@ -2124,7 +2204,23 @@ function continueAsGuest(){
   currentUser={username:'guest_'+Date.now(),display:'Guest',isGuest:true};
   localStorage.removeItem('bf_session');afterLogin();
 }
-function afterLogin(){updateMenuUserBadge();updateCoinDisplays();showScreen('menu');}
+function isAdmin(){ return currentUser && !currentUser.isGuest && currentUser.username==='ynsteyn'; }
+
+function afterLogin(){
+  updateMenuUserBadge();
+  updateCoinDisplays();
+  // Admin setup
+  const adminBtn=document.getElementById('admin-menu-btn');
+  if(adminBtn) adminBtn.style.display=isAdmin()?'':'none';
+  if(isAdmin()){
+    // Ensure admin skin is owned and equipped
+    const s=getSave();
+    if(!s.owned.includes('admin')) s.owned.push('admin');
+    s.equipped='admin';
+    writeSave(s);
+  }
+  showScreen('menu');
+}
 function logout(){
   currentUser=null;localStorage.removeItem('bf_session');
   document.getElementById('login-username').value='';
@@ -2316,12 +2412,14 @@ async function showProfile(username){
     if(!user){inner.innerHTML='<div class="comm-loading">User not found.</div>';return;}
     const totalPlays=(levels||[]).reduce((s,l)=>s+(l.plays||0),0);
     const isMe=currentUser&&!currentUser.isGuest&&currentUser.username===username;
+    const isAdminUser=username==='ynsteyn';
+    const adminBadge=isAdminUser?'<span style="background:#ff4500;color:#fff;font-size:12px;padding:3px 10px;margin-left:8px;font-family:monospace;letter-spacing:1px;vertical-align:middle">👑 ADMIN</span>':'';
     inner.innerHTML=`
       <div class="profile-header">
-        <div class="profile-avatar">👤</div>
+        <div class="profile-avatar">${isAdminUser?'👑':'👤'}</div>
         <div>
-          <div class="profile-name">${escHtml(username)}${isMe?' <span style="font-size:16px;color:rgba(255,255,255,0.4)">(you)</span>':''}</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px">Member of BLOCKFORGE</div>
+          <div class="profile-name">${escHtml(username)}${adminBadge}${isMe?' <span style="font-size:16px;color:rgba(255,255,255,0.4)">(you)</span>':''}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px">${isAdminUser?'<span style="color:#ff6b35">BLOCKFORGE Administrator</span>':'Member of BLOCKFORGE'}</div>
         </div>
       </div>
       <div class="profile-stats">
@@ -2362,13 +2460,107 @@ function renderLbList(elId,users,valFn,clickable){
   users.forEach((u,i)=>{
     const row=document.createElement('div');
     const isYou=currentUser&&!currentUser.isGuest&&u.username===currentUser.username;
+    const isAdminUser=u.username==='ynsteyn';
     row.className='lb-row'+(isYou?' lb-you':'');
     const posClass=i===0?'p1':i===1?'p2':i===2?'p3':'pn';
     const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    row.innerHTML=`<div class="lb-pos ${posClass}">${medal||('#'+(i+1))}</div><div class="lb-user">${escHtml(u.username)}${isYou?' <span style="font-size:12px;color:var(--yellow)">(you)</span>':''}</div><div class="lb-val">${valFn(u)}</div>`;
+    const adminMark=isAdminUser?' <span style="color:#ff4500;font-size:13px">👑</span>':'';
+    row.innerHTML=`<div class="lb-pos ${posClass}">${medal||('#'+(i+1))}</div><div class="lb-user">${escHtml(u.username)}${adminMark}${isYou?' <span style="font-size:12px;color:var(--yellow)">(you)</span>':''}</div><div class="lb-val">${valFn(u)}</div>`;
     if(clickable)row.onclick=()=>showProfile(u.username);
     el.appendChild(row);
   });
+}
+
+// =============================================
+// ADMIN
+// =============================================
+function showAdmin(){
+  if(!isAdmin()){showMenu();return;}
+  showScreen('admin');
+  adminLoadLevels();
+}
+
+async function adminGiveCoins(){
+  if(!isAdmin())return;
+  const amount=parseInt(document.getElementById('admin-coins-amount').value);
+  const fb=document.getElementById('admin-coins-feedback');
+  if(!amount||amount<1){fb.textContent='Enter a valid amount.';return;}
+  fb.textContent='Working...';
+  try{
+    // Fetch all users
+    const users=await sbFetch('bf_users?select=username,coins');
+    if(!users||users.length===0){fb.textContent='No users found.';return;}
+    // Update each user
+    let done=0;
+    for(const u of users){
+      const newCoins=(u.coins||0)+amount;
+      await sbFetch(`bf_users?username=eq.${encodeURIComponent(u.username)}`,{method:'PATCH',prefer:'return=minimal',body:{coins:newCoins}});
+      done++;
+      fb.textContent=`Updating... ${done}/${users.length}`;
+    }
+    fb.textContent=`✅ Gave ${amount.toLocaleString()} coins to ${done} players!`;
+    // Also update local save
+    const s=getSave();
+    s.coins=(s.coins||0)+amount;
+    writeSave(s);
+    updateCoinDisplays();
+  }catch(e){fb.textContent='Error: '+e.message;}
+}
+
+async function adminBanPlayer(){
+  if(!isAdmin())return;
+  const raw=document.getElementById('admin-ban-username').value.trim().toLowerCase();
+  const fb=document.getElementById('admin-ban-feedback');
+  if(!raw||raw.length<2){fb.textContent='Enter a username.';return;}
+  if(raw==='ynsteyn'){fb.textContent="Can't ban yourself!";return;}
+  if(!confirm(`Ban player "${raw}"? This will delete their account AND all their published levels.`))return;
+  fb.textContent='Banning...';
+  try{
+    // Delete their levels
+    await sbFetch(`bf_levels?author=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
+    // Delete their likes
+    await sbFetch(`bf_likes?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
+    // Delete their ratings
+    await sbFetch(`bf_ratings?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
+    // Delete the user
+    await sbFetch(`bf_users?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
+    fb.textContent=`✅ Player "${raw}" has been banned and removed.`;
+    document.getElementById('admin-ban-username').value='';
+    adminLoadLevels(); // refresh level list
+  }catch(e){fb.textContent='Error: '+e.message;}
+}
+
+async function adminDeleteLevel(levelId, levelName){
+  if(!isAdmin())return;
+  if(!confirm(`Delete level "${levelName}"? This cannot be undone.`))return;
+  try{
+    await sbFetch(`bf_levels?id=eq.${encodeURIComponent(levelId)}`,{method:'DELETE'});
+    adminLoadLevels();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function adminLoadLevels(){
+  if(!isAdmin())return;
+  const container=document.getElementById('admin-levels-list');
+  container.innerHTML='<div class="comm-loading">Loading all levels...</div>';
+  try{
+    const levels=await sbFetch('bf_levels?select=id,name,author,likes,plays,published_at&order=published_at.desc&limit=200');
+    if(!levels||levels.length===0){container.innerHTML='<div class="comm-loading">No published levels.</div>';return;}
+    container.innerHTML='';
+    levels.forEach(lv=>{
+      const row=document.createElement('div');
+      row.className='admin-level-row';
+      const ts=lv.published_at?new Date(lv.published_at).toLocaleDateString():'?';
+      row.innerHTML=`
+        <div style="flex:1">
+          <div class="admin-level-name">${escHtml(lv.name)}</div>
+          <div class="admin-level-meta">by ${escHtml(lv.author)} · ❤️${lv.likes||0} · ▶${lv.plays||0} · ${ts}</div>
+        </div>
+        <button class="admin-del-btn" onclick="adminDeleteLevel('${escHtml(lv.id)}','${escHtml(lv.name)}')">🗑 DELETE</button>
+      `;
+      container.appendChild(row);
+    });
+  }catch(e){container.innerHTML=`<div class="comm-loading">Error: ${e.message}</div>`;}
 }
 
 // =============================================
