@@ -616,6 +616,7 @@ const TILE_COLORS={
 };
 
 let G={};
+let currentCommunityLevelId=null; // kept outside G so initGameState() doesn't wipe it
 
 function initGameState(){
   G={
@@ -1145,7 +1146,7 @@ function winPlayer(){
   writeSave(s);updateCoinDisplays();
   setTimeout(syncCoinsToLeaderboard,800);
   // Increment play count for community levels (best effort)
-  if(G._communityLevelId) incrementPlayCount(G._communityLevelId).catch(()=>{});
+  if(currentCommunityLevelId) incrementPlayCount(currentCommunityLevelId).catch(()=>{});
 }
 
 function updatePowerupHUD(){
@@ -1859,109 +1860,178 @@ function generateStoryLevel(num){
   grid[LEVEL_ROWS-6][LEVEL_COLS-5]={type:5,color:'#ffbe0b'};
   grid[LEVEL_ROWS-5][LEVEL_COLS-5]={type:1,color:'#aaa'};
 
-  // Add water sections in swamp world
+  // Swamp world: water hazard sections
   if(worldIdx===4){
     for(let c=20;c<28;c++){grid[LEVEL_ROWS-1][c]={type:14,color:'#0077b6'};grid[LEVEL_ROWS-2][c]={type:14,color:'#0077b6'};}
     for(let c=45;c<52;c++){grid[LEVEL_ROWS-1][c]={type:14,color:'#0077b6'};grid[LEVEL_ROWS-2][c]={type:14,color:'#0077b6'};}
   }
 
-  const maxGapX=Math.min(6,3+Math.floor(difficulty*0.35));
-  const maxRiseY=Math.min(4,2+Math.floor(difficulty*0.25));
-  const minPlatLen=Math.max(2,5-Math.floor(difficulty*0.4));
-  const maxPlatLen=Math.max(3,7-Math.floor(difficulty*0.4));
+  // --- BUG FIX: gap/rise caps tuned to player physics ---
+  // Player: vx=4, vy=-11.5, gravity=0.48. Max horizontal range per jump ≈ 9 tiles.
+  // With difficulty-based gap, keep hard cap at 4 so it's always clearable.
+  // Rise cap at 3 rows (4 rows requires a bounce pad, which we add explicitly).
+  const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));   // was min(6,…*0.35) — now capped at 4
+  const maxRiseY=Math.min(3,1+Math.floor(difficulty*0.2));   // was min(4,…*0.25) — now capped at 3
+  const minPlatLen=Math.max(3,5-Math.floor(difficulty*0.3)); // slightly longer minimum platforms
+  const maxPlatLen=Math.max(4,7-Math.floor(difficulty*0.3));
   const numPlatforms=10+difficulty*2;
-  let cx=9,cy=LEVEL_ROWS-3;
 
-  // Place key+door on some levels (multiples of 3, world 4+)
+  // --- BUG FIX: cx layout uses a cursor that respects LEVEL_COLS properly ---
+  // The old code clamped cx to LEVEL_COLS-12=68 then kept adding more platforms
+  // on top of each other. Now we track cx as a true running position, and stop
+  // placing platforms once we've passed the safe zone (column 68).
+  // The end platform starts at LEVEL_COLS-9=71, so we stop at 65 to leave room.
+  const PLACE_LIMIT=LEVEL_COLS-12; // col 68 — don't start a platform past here
+  let cx=9,cy=LEVEL_ROWS-3;
+  let prevWasMoving=false; // track so we don't put big gaps after moving platforms
+
+  // Key + door
   let hasKeyDoor=worldIdx>=3&&num%3===0;
   let keyPlaced=false,doorPlaced=false;
 
   for(let i=0;i<numPlatforms;i++){
-    const len=minPlatLen+Math.floor(r()*(maxPlatLen-minPlatLen+1));
-    const dx=2+Math.floor(r()*(maxGapX-1));
-    const rawDy=Math.floor(r()*(maxRiseY*2+1))-maxRiseY;
+    // Draw random values unconditionally so RNG stays consistent
+    const lenRoll=r();
+    const dxRoll=r();
+    const dyRoll=r();
+
+    // --- BUG FIX: compute advance before clamping, stop loop if we've filled the level ---
+    const dx=2+Math.floor(dxRoll*(maxGapX-1));
+
+    // If the next platform would start past the safe zone, stop generating
+    // (filler bridge logic below will connect to the end)
+    const nextCX=cx+dx;
+    if(nextCX>=PLACE_LIMIT) break;
+    cx=nextCX;
+
+    const rawDy=Math.floor(dyRoll*(maxRiseY*2+1))-maxRiseY;
     const dy=Math.max(-maxRiseY,Math.min(maxRiseY,rawDy));
-    cx=Math.min(cx+dx,LEVEL_COLS-12);
     cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy));
 
+    const len=minPlatLen+Math.floor(lenRoll*(maxPlatLen-minPlatLen+1));
+    // Clamp length so platform doesn't poke into end zone
+    const safeLen=Math.min(len, PLACE_LIMIT-cx);
+    if(safeLen<2){cx+=safeLen;continue;} // too tight, skip
+
+    // Tile type
     let platType=1;
     if(worldIdx===2&&r()<0.5)platType=9;
-    if(worldIdx===6&&r()<0.3)platType=9;
+    else if(worldIdx===6&&r()<0.3)platType=9;
+    else r(); // consume so RNG stays on track for worlds that don't use this
 
-    // Moving platforms on some levels
-    if(worldIdx>=3&&r()<0.25&&len>=3){
+    // Moving platforms — only if: world>=3, gap is reasonable, prev wasn't moving
+    // BUG FIX: was unconditional, causing chains of moving platforms with big gaps
+    const wantMoving=worldIdx>=3&&r()<0.15&&safeLen>=3&&!prevWasMoving&&dx<=3;
+    if(wantMoving){
       grid[cy][cx]={type:16,color:pc[0]};
+      prevWasMoving=true;
     } else {
-      for(let j=0;j<len;j++){
-        if(cx+j<LEVEL_COLS-8)grid[cy][cx+j]={type:platType,color:pc[Math.floor(r()*pc.length)]};
+      for(let j=0;j<safeLen;j++){
+        grid[cy][cx+j]={type:platType,color:pc[Math.floor(r()*pc.length)]};
+      }
+      prevWasMoving=false;
+    }
+
+    // One-way platforms — only on normal platforms (not moving), world 2+
+    if(!wantMoving&&worldIdx>=1&&r()<0.18&&safeLen>=3&&cx+2<PLACE_LIMIT){
+      for(let j=0;j<safeLen;j++) if(cx+j<PLACE_LIMIT) grid[cy][cx+j]={type:15,color:pc[0]};
+    } else if(worldIdx>=1) r(); // consume RNG
+
+    // Coins above platform
+    if(r()<0.80-difficulty*0.02){
+      for(let j=0;j<safeLen;j++){
+        if(r()<0.5&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
       }
     }
 
-    // One-way platforms world 2+
-    if(worldIdx>=1&&r()<0.2&&len>=3&&cx+2<LEVEL_COLS-8){
-      for(let j=0;j<len;j++) if(cx+j<LEVEL_COLS-8) grid[cy][cx+j]={type:15,color:pc[0]};
+    // Power-ups (rare, on platform surface)
+    if(r()<0.10&&cy-1>=0&&cx+Math.floor(safeLen/2)<PLACE_LIMIT){
+      const puRoll=r();
+      const pu=puRoll<0.45?21:puRoll<0.75?22:23;
+      grid[cy-1][cx+Math.floor(safeLen/2)]={type:pu,color:TILE_COLORS[pu]};
     }
 
-    // Coins
-    if(r()<0.75-difficulty*0.03){
-      for(let j=0;j<len;j++){
-        if(r()<0.5&&cy-1>=0&&cx+j<LEVEL_COLS-8)grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
-      }
-    }
-    // Power-ups (rare)
-    if(r()<0.12&&cy-1>=0&&cx+Math.floor(len/2)<LEVEL_COLS-8){
-      const pu=r()<0.5?21:r()<0.5?22:23;
-      grid[cy-1][cx+Math.floor(len/2)]={type:pu,color:TILE_COLORS[pu]};
+    // Checkpoint at mid-level
+    if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&safeLen>=3){
+      grid[cy][cx+Math.floor(safeLen/2)]={type:13,color:'#ffd60a'};
     }
 
-    // Checkpoint mid-level
-    if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&len>=3){
-      grid[cy][cx+Math.floor(len/2)]={type:13,color:'#ffd60a'};
-    }
-
-    // Teleporters (world 4+, pair placed together)
-    if(worldIdx>=3&&!hasKeyDoor&&r()<0.12&&cx+len+6<LEVEL_COLS-10){
+    // Teleporters (world 4+) — only when there's still room ahead
+    if(worldIdx>=3&&!hasKeyDoor&&r()<0.10&&cx+safeLen+8<PLACE_LIMIT-4){
       grid[cy-1][cx]={type:17,color:'#c77dff'};
-      // Partner placed later
-      const pairC=Math.min(cx+len+4,LEVEL_COLS-10);
-      if(cy-1>=0)grid[cy-1][pairC]={type:18,color:'#7b2d8b'};
-    }
+      const pairC=cx+safeLen+4;
+      if(cy-1>=0&&pairC<PLACE_LIMIT) grid[cy-1][pairC]={type:18,color:'#7b2d8b'};
+    } else if(worldIdx>=3) r();
 
     // Key + Door
-    if(hasKeyDoor&&!keyPlaced&&i===Math.floor(numPlatforms*0.3)&&cy-1>=0&&cx+1<LEVEL_COLS-8){
+    if(hasKeyDoor&&!keyPlaced&&i===Math.floor(numPlatforms*0.3)&&cy-1>=0&&cx+1<PLACE_LIMIT){
       grid[cy-1][cx+1]={type:19,color:'#ffd60a'};
       keyPlaced=true;
     }
-    if(hasKeyDoor&&!doorPlaced&&keyPlaced&&i===Math.floor(numPlatforms*0.7)&&cy-1>=0&&cx<LEVEL_COLS-8){
+    if(hasKeyDoor&&!doorPlaced&&keyPlaced&&i===Math.floor(numPlatforms*0.7)&&cy-1>=0&&cx<PLACE_LIMIT){
       grid[cy-1][cx]={type:20,color:'#adb5bd'};
       doorPlaced=true;
     }
 
-    // Enemies
-    if(difficulty>=2&&r()<0.25&&len>=3&&cx+1<LEVEL_COLS-8) grid[cy-1][cx+1]={type:4,color:pc[0]};
-    if(worldIdx>=4&&r()<0.2&&len>=4&&cx+1<LEVEL_COLS-8) grid[cy-2][cx+1]={type:11,color:pc[0]};
-    if(worldIdx>=4&&r()<0.15&&cx+2<LEVEL_COLS-8) grid[cy-1][cx+Math.floor(len/2)]={type:24,color:'#6d6875'};
-    if(worldIdx>=1&&r()<0.12&&len>=3&&cx+1<LEVEL_COLS-8) grid[cy-1][cx]={type:25,color:'#4d908e'};
-    if(difficulty>=4&&r()<0.2&&len>=3){const sp=1+Math.floor(r()*(len-2));if(cx+sp<LEVEL_COLS-8)grid[cy][cx+sp]={type:2,color:'#ccc'};}
-    if(worldIdx>=1&&r()<0.25&&cx>10){for(let lc=cx-2;lc<cx&&lc<LEVEL_COLS-8;lc++)grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};}
-    if(worldIdx>=2&&r()<0.3&&cx<LEVEL_COLS-10) grid[cy][cx]={type:6,color:'#3a86ff'};
-    if(worldIdx>=3&&r()<0.2&&len>=2) grid[cy][cx]={type:8,color:'#fb5607'};
-    if(worldIdx>=4&&r()<0.2&&cx+2<LEVEL_COLS-8){const dr=Math.max(0,cy-4);if(dr>=0)grid[dr][cx+Math.floor(len/2)]={type:10,color:'#ff006e'};}
-    if(worldIdx>=5&&r()<0.2&&cx+3<LEVEL_COLS-8) grid[cy-1][cx+Math.floor(len/2)]={type:12,color:'#06d6a0'};
-    cx=cx+len;
+    // --- ENEMIES (only when platform has room, and cx is safely in bounds) ---
+    // BUG FIX: previously goombas spawned even at cx=68 (the piled zone)
+    // causing many goombas stacked together that bounce off each other rapidly.
+    const safeEnemy=cx+1<PLACE_LIMIT;
+    if(difficulty>=2&&r()<0.22&&safeLen>=3&&safeEnemy) grid[cy-1][cx+1]={type:4,color:pc[0]};
+    if(worldIdx>=4&&r()<0.15&&safeLen>=4&&safeEnemy) grid[cy-2][cx+1]={type:11,color:pc[0]};
+    if(worldIdx>=4&&r()<0.12&&safeEnemy) grid[cy-1][cx+Math.floor(safeLen/2)]={type:24,color:'#6d6875'};
+    if(worldIdx>=1&&r()<0.10&&safeLen>=3&&safeEnemy) grid[cy-1][cx]={type:25,color:'#4d908e'};
+
+    // Spikes (not on moving platform, and only mid-platform)
+    if(!wantMoving&&difficulty>=4&&r()<0.18&&safeLen>=4){
+      const sp=1+Math.floor(r()*(safeLen-2));
+      if(cx+sp<PLACE_LIMIT) grid[cy][cx+sp]={type:2,color:'#ccc'};
+    } else if(difficulty>=4) r();
+
+    // Lava gaps in floor
+    if(worldIdx>=1&&r()<0.22&&cx>12){
+      for(let lc=cx-2;lc<cx&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
+    }
+
+    // Bounce pad (helpful on high-rise platforms, required when rise==maxRiseY)
+    const needsBounce=dy<=-maxRiseY;
+    if(worldIdx>=2&&(needsBounce||r()<0.25)&&cx<PLACE_LIMIT-2) grid[cy][cx]={type:6,color:'#3a86ff'};
+    else if(worldIdx>=2) r();
+
+    // Arrow block
+    if(worldIdx>=3&&r()<0.18&&safeLen>=2&&cx<PLACE_LIMIT-1) grid[cy][cx]={type:8,color:'#fb5607'};
+
+    // Dropper
+    if(worldIdx>=4&&r()<0.18&&cx+2<PLACE_LIMIT){
+      const dr=Math.max(0,cy-4);
+      if(dr>=0) grid[dr][cx+Math.floor(safeLen/2)]={type:10,color:'#ff006e'};
+    }
+
+    // Cannon (world 6+)
+    if(worldIdx>=5&&r()<0.18&&cx+3<PLACE_LIMIT) grid[cy-1][cx+Math.floor(safeLen/2)]={type:12,color:'#06d6a0'};
+
+    cx=cx+safeLen;
   }
 
+  // Death floor — spikes or lava in gaps between platforms
   for(let c=9;c<LEVEL_COLS-9;c++){
     if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0){
       grid[LEVEL_ROWS-1][c]=worldIdx===5?{type:7,color:'#e63946'}:{type:2,color:'#aaa'};
     }
   }
+
+  // Filler bridge: if there's a gap >4 tiles between last platform and end zone,
+  // add a connecting platform at a safe height
   const endStart=LEVEL_COLS-9;
-  if(endStart-cx>6){
-    const midC=Math.floor((cx+endStart)/2);
+  if(endStart-cx>4){
+    // Place one or two stepping platforms to bridge the gap
+    const mid1C=cx+Math.floor((endStart-cx)*0.4);
+    const mid2C=cx+Math.floor((endStart-cx)*0.72);
     const midR=Math.max(5,Math.min(LEVEL_ROWS-4,cy));
-    for(let j=0;j<5;j++)if(midC+j<endStart)grid[midR][midC+j]={type:1,color:pc[0]};
+    if(mid1C+3<endStart) for(let j=0;j<4;j++) if(mid1C+j<endStart) grid[midR][mid1C+j]={type:1,color:pc[0]};
+    if(mid2C+3<endStart) for(let j=0;j<4;j++) if(mid2C+j<endStart) grid[midR][mid2C+j]={type:1,color:pc[0]};
   }
+
   return{name:`Level ${num}`,grid};
 }
 
@@ -2148,7 +2218,7 @@ async function loadCommunityLevels(){
       const playBtn=document.createElement('button');
       playBtn.className='play-comm-btn';playBtn.textContent='▶ PLAY';
       playBtn.onclick=()=>{
-        G._communityLevelId=lv.id;
+        currentCommunityLevelId=lv.id;
         showPlayLevel(lv,false,null);
       };
       actions.append(rateDiv,likeBtn,playBtn);
