@@ -358,6 +358,12 @@ canvas{display:block;}
       <option value="5">Goal 🚩</option>
       <option value="6">Bounce 🔵</option>
       <option value="7">Lava 🔥</option>
+      <option value="8">Arrow ➡️</option>
+      <option value="9">Ice 🧊</option>
+      <option value="10">Dropper ⬇️</option>
+      <option value="11">Big Goomba 👹</option>
+      <option value="12">Cannon 💣</option>
+      <option value="13">Checkpoint 🏁</option>
     </select>
     <div id="zoom-btns">
       <button class="zoom-btn" onclick="changeZoom(-1)">−</button>
@@ -426,36 +432,78 @@ const SKINS = [
 ];
 
 // =============================================
-// STORY LEVEL DEFINITIONS (20 levels)
+// STORY LEVEL DEFINITIONS (50 levels, 10 worlds)
 // =============================================
 const WORLDS = [
-  { name:'World 1 — Grasslands', color:'#52b788', levels:[
-    { num:1, name:'First Steps',      diff:1 },
-    { num:2, name:'Coin Hunt',        diff:1 },
-    { num:3, name:'Goomba Patrol',    diff:1 },
-    { num:4, name:'Sky High',         diff:2 },
-    { num:5, name:'Boss Bridge',      diff:2 },
+  { name:'World 1 — Grasslands',     color:'#52b788', levels:[
+    { num:1,  name:'First Steps',       diff:1 },
+    { num:2,  name:'Coin Hunt',         diff:1 },
+    { num:3,  name:'Goomba Patrol',     diff:1 },
+    { num:4,  name:'Sky High',          diff:2 },
+    { num:5,  name:'Boss Bridge',       diff:2 },
   ]},
   { name:'World 2 — Scorched Desert', color:'#f4d35e', levels:[
-    { num:6, name:'Sand Dunes',       diff:2 },
-    { num:7, name:'Pyramid Run',      diff:2 },
-    { num:8, name:'Spike Alley',      diff:3 },
-    { num:9, name:'Lava Leap',        diff:3 },
-    { num:10,name:'Desert Storm',     diff:3 },
+    { num:6,  name:'Sand Dunes',        diff:2 },
+    { num:7,  name:'Pyramid Run',       diff:2 },
+    { num:8,  name:'Spike Alley',       diff:3 },
+    { num:9,  name:'Lava Leap',         diff:3 },
+    { num:10, name:'Desert Storm',      diff:3 },
   ]},
-  { name:'World 3 — Icy Peaks', color:'#90e0ef', levels:[
-    { num:11,name:'Frozen Falls',     diff:3 },
-    { num:12,name:'Glacier Gap',      diff:3 },
-    { num:13,name:'Blizzard Run',     diff:4 },
-    { num:14,name:'Crystal Caves',    diff:4 },
-    { num:15,name:'Avalanche!',       diff:4 },
+  { name:'World 3 — Icy Peaks',       color:'#90e0ef', levels:[
+    { num:11, name:'Frozen Falls',      diff:3 },
+    { num:12, name:'Glacier Gap',       diff:3 },
+    { num:13, name:'Blizzard Run',      diff:4 },
+    { num:14, name:'Crystal Caves',     diff:4 },
+    { num:15, name:'Avalanche!',        diff:4 },
   ]},
-  { name:'World 4 — Sky Fortress', color:'#8338ec', levels:[
-    { num:16,name:'Cloud Hopper',     diff:4 },
-    { num:17,name:'Thunder Road',     diff:4 },
-    { num:18,name:'Lightning Strike', diff:5 },
-    { num:19,name:'The Fortress',     diff:5 },
-    { num:20,name:'Final Showdown',   diff:5 },
+  { name:'World 4 — Sky Fortress',    color:'#8338ec', levels:[
+    { num:16, name:'Cloud Hopper',      diff:4 },
+    { num:17, name:'Thunder Road',      diff:4 },
+    { num:18, name:'Lightning Strike',  diff:5 },
+    { num:19, name:'The Fortress',      diff:5 },
+    { num:20, name:'Final Showdown',    diff:5 },
+  ]},
+  { name:'World 5 — Haunted Swamp',   color:'#606c38', levels:[
+    { num:21, name:'Foggy Marsh',       diff:5 },
+    { num:22, name:'Ghost Bridge',      diff:5 },
+    { num:23, name:'Vine Jungle',       diff:5 },
+    { num:24, name:'Quicksand Pit',     diff:6 },
+    { num:25, name:'Swamp Boss',        diff:6 },
+  ]},
+  { name:'World 6 — Volcanic Core',   color:'#e63946', levels:[
+    { num:26, name:'Magma River',       diff:6 },
+    { num:27, name:'Eruption Zone',     diff:6 },
+    { num:28, name:'Ash Cloud',         diff:6 },
+    { num:29, name:'Lava Tubes',        diff:7 },
+    { num:30, name:'Inferno Peak',      diff:7 },
+  ]},
+  { name:'World 7 — Crystal Mines',   color:'#48cae4', levels:[
+    { num:31, name:'Diamond Shaft',     diff:7 },
+    { num:32, name:'Gemstone Gorge',    diff:7 },
+    { num:33, name:'Cave Crusher',      diff:7 },
+    { num:34, name:'Crystal Maze',      diff:8 },
+    { num:35, name:'Mine Collapse',     diff:8 },
+  ]},
+  { name:'World 8 — Storm Peaks',     color:'#4cc9f0', levels:[
+    { num:36, name:'Thunderhead',       diff:8 },
+    { num:37, name:'Lightning Maze',    diff:8 },
+    { num:38, name:'Cyclone Pass',      diff:8 },
+    { num:39, name:'Eye of the Storm',  diff:9 },
+    { num:40, name:'Storm King',        diff:9 },
+  ]},
+  { name:'World 9 — Shadow Realm',    color:'#7209b7', levels:[
+    { num:41, name:'Dark Portal',       diff:9 },
+    { num:42, name:'Shadow Maze',       diff:9 },
+    { num:43, name:'Void Walker',       diff:9 },
+    { num:44, name:'Nightmare Run',     diff:10 },
+    { num:45, name:'Soul Eater',        diff:10 },
+  ]},
+  { name:'World 10 — The Endgame',    color:'#ffbe0b', levels:[
+    { num:46, name:'Gates of Hell',     diff:10 },
+    { num:47, name:'Gauntlet',          diff:10 },
+    { num:48, name:'No Mercy',          diff:10 },
+    { num:49, name:'The Last Run',      diff:10 },
+    { num:50, name:'BLOCKFORGE MASTER', diff:10 },
   ]},
 ];
 
@@ -669,15 +717,29 @@ function equipSkin(id){
 // GAME ENGINE
 // =============================================
 const TILE = 32;
-const LEVEL_COLS = 80; // wide scrolling level
+const LEVEL_COLS = 80;
 const LEVEL_ROWS = 20;
-const TILE_COLORS = { 1:'#457b9d', 2:'#c9c9c9', 3:'#ffbe0b', 4:'#e63946', 5:'#f4d35e', 6:'#3a86ff', 7:'#e63946' };
+const TILE_COLORS = {
+  1:'#457b9d',  // Block
+  2:'#c9c9c9',  // Spike
+  3:'#ffbe0b',  // Coin
+  4:'#e63946',  // Goomba
+  5:'#f4d35e',  // Goal
+  6:'#3a86ff',  // Bounce
+  7:'#e63946',  // Lava
+  8:'#fb5607',  // Arrow Block (shoots player right)
+  9:'#90e0ef',  // Ice Block (slippery)
+  10:'#ff006e', // Dropper (falls from ceiling)
+  11:'#8338ec', // Big Goomba
+  12:'#06d6a0', // Cannon (shoots projectiles)
+  13:'#ffd60a', // Checkpoint (save point)
+};
 
 let G = {}; // game state
 
 function initGameState(){
   G = {
-    mode: 'build', // 'build' | 'play'
+    mode: 'build',
     frame: 0,
     score: 0,
     lives: 3,
@@ -686,6 +748,9 @@ function initGameState(){
     enemies: [],
     coins: [],
     particles: [],
+    projectiles: [],
+    droppers: [],
+    checkpointX: 64, checkpointY: 400,
     deathTimer: 0,
     winTimer: 0,
     gameOver: false,
@@ -838,8 +903,7 @@ function onKeyDown(e){
   keys[e.code]=true;
   if(e.code==='KeyB'&&!G.isPlayOnly) toggleGameMode();
   if(e.code==='Escape') exitGame();
-  // Number keys for tile type
-  for(let i=1;i<=7;i++) if(e.code===`Digit${i}`&&!G.isPlayOnly&&G.mode==='build'){ G.tileType=i; document.getElementById('tile-type-sel').value=i; }
+  for(let i=1;i<=9;i++) if(e.code===`Digit${i}`&&!G.isPlayOnly&&G.mode==='build'){ G.tileType=i; document.getElementById('tile-type-sel').value=i; }
 }
 function onKeyUp(e){ keys[e.code]=false; }
 function onMouseDown(e){
@@ -899,7 +963,7 @@ function toggleGameMode(){
     showGameHUD(true);
   } else {
     G.mode='build';
-    G.enemies=[];G.coins=[];G.particles=[];
+    G.enemies=[];G.coins=[];G.particles=[];G.projectiles=[];
     G.deathTimer=0; G.winTimer=0; G.gameOver=false; G.won=false;
     G.player=defaultPlayer();
     G.cameraX=0; G.cameraY=0;
@@ -918,21 +982,27 @@ function enterPlayMode(){
   G.score=0; G.lives=3; G.coinsCollected=0;
   G.deathTimer=0; G.winTimer=0; G.gameOver=false; G.won=false;
   G.cameraX=0; G.cameraY=0;
-  G.enemies=[]; G.coins=[]; G.particles=[];
+  G.checkpointX=64; G.checkpointY=400;
+  G.enemies=[]; G.coins=[]; G.particles=[]; G.projectiles=[];
   spawnEnemiesFromGrid();
   spawnCoinsFromGrid();
 }
 
 function spawnEnemiesFromGrid(){
+  G.projectiles=[];
   for(let r=0;r<LEVEL_ROWS;r++) for(let c=0;c<LEVEL_COLS;c++){
     const t=G.grid[r][c];
     if(t.type===4){
-      G.enemies.push({
-        x:c*TILE,y:(r-1)*TILE,w:28,h:28,
-        vx:-1.4,vy:0,onGround:false,
-        dead:false,deathAnim:0,color:t.color,
-        type:'goomba'
-      });
+      G.enemies.push({x:c*TILE,y:(r-1)*TILE,w:28,h:28,vx:-1.4,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#8B4513',type:'goomba',isBig:false});
+    }
+    if(t.type===11){
+      G.enemies.push({x:c*TILE-4,y:(r-2)*TILE,w:40,h:40,vx:-0.9,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#8338ec',type:'goomba',isBig:true,stomps:0});
+    }
+    if(t.type===12){
+      G.enemies.push({x:c*TILE,y:r*TILE,w:TILE,h:TILE,vx:0,vy:0,onGround:true,dead:false,deathAnim:0,color:t.color||'#06d6a0',type:'cannon',fireTimer:60+Math.floor(c*17%80),originC:c,originR:r});
+    }
+    if(t.type===10){
+      G.enemies.push({x:c*TILE+2,y:r*TILE,w:28,h:28,vx:0,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#ff006e',type:'dropper',dropping:false,originY:r*TILE});
     }
   }
 }
@@ -951,7 +1021,12 @@ function isSolid(r,c){
   if(r>=LEVEL_ROWS) return true;
   if(r<0) return false;
   const t=G.grid[r][c];
-  return t&&(t.type===1||t.type===6);
+  return t&&(t.type===1||t.type===6||t.type===9||t.type===8||t.type===13);
+}
+function isIce(r,c){
+  if(r<0||r>=LEVEL_ROWS||c<0||c>=LEVEL_COLS) return false;
+  const t=G.grid[r][c];
+  return t&&t.type===9;
 }
 function resolveEnt(ent){
   // Horizontal
@@ -972,10 +1047,15 @@ function resolveEnt(ent){
     const bc=Math.floor((ent.y+ent.h)/TILE);
     let hit=false;
     if(isSolid(bc,ll)||isSolid(bc,lr)){ent.y=bc*TILE-ent.h;ent.vy=0;ent.onGround=true;hit=true;}
-    // Bounce block
     if(hit&&G.grid[bc]){
       const tileL=G.grid[bc][ll],tileR=G.grid[bc][lr];
-      if((tileL&&tileL.type===6)||(tileR&&tileR.type===6)){ent.vy=-14;}
+      // Bounce block
+      if((tileL&&tileL.type===6)||(tileR&&tileR.type===6)){ent.vy=-16;}
+      // Arrow block — launches horizontally
+      if((tileL&&tileL.type===8)||(tileR&&tileR.type===8)){ent.vx=12;ent.vy=-6;}
+      // Ice — very slippery
+      if((tileL&&tileL.type===9)||(tileR&&tileR.type===9)){ent._onIce=true;}
+      else {ent._onIce=false;}
     }
   } else {
     const tc=Math.floor(ent.y/TILE);
@@ -991,9 +1071,11 @@ function updatePlayer(){
   const left=keys['ArrowLeft']||keys['KeyA'];
   const right=keys['ArrowRight']||keys['KeyD'];
   const doJump=keys['Space']||keys['ArrowUp']||keys['KeyW'];
-  if(left){p.vx=-spd;p.facingRight=false;}
-  else if(right){p.vx=spd;p.facingRight=true;}
-  else p.vx*=0.72;
+  // Ice: very low friction, can't stop quickly
+  const friction = p._onIce ? 0.97 : 0.72;
+  if(left){p.vx = p._onIce ? Math.max(p.vx-0.4,-spd) : -spd; p.facingRight=false;}
+  else if(right){p.vx = p._onIce ? Math.min(p.vx+0.4,spd) : spd; p.facingRight=true;}
+  else p.vx*=friction;
   // Coyote time
   if(p.onGround) p.coyoteTime=8;
   else if(p.coyoteTime>0) p.coyoteTime--;
@@ -1002,14 +1084,14 @@ function updatePlayer(){
   if(p.jumpBuffer>0&&p.coyoteTime>0){p.vy=jump;p.coyoteTime=0;p.jumpBuffer=0;spawnParticles(p.x+p.w/2,p.y+p.h,'#fff',5);}
   p.vy+=grav;
   if(p.vy>18)p.vy=18;
+  p._onIce=false;
   resolveEnt(p);
-  // Lava / spike
+  // Tile hazard checks
   const pc=Math.floor((p.x+p.w/2)/TILE),pr=Math.floor((p.y+p.h-1)/TILE);
   if(pr>=0&&pr<LEVEL_ROWS&&pc>=0&&pc<LEVEL_COLS){
     const t=G.grid[pr][pc];
     if(t&&(t.type===2||t.type===7)) killPlayer();
   }
-  // Left spike wall
   const ptop=Math.floor(p.y/TILE),pbot=Math.floor((p.y+p.h-1)/TILE);
   const pleft=Math.floor(p.x/TILE),pright=Math.floor((p.x+p.w-1)/TILE);
   [[ptop,pleft],[pbot,pleft],[ptop,pright],[pbot,pright]].forEach(([r,c])=>{
@@ -1018,11 +1100,18 @@ function updatePlayer(){
       if(t&&(t.type===2||t.type===7)) killPlayer();
     }
   });
-  // Fall death — trigger as soon as player drops below the level floor
   if(p.y > LEVEL_ROWS*TILE+TILE) killPlayer();
-  // Goal
-  if(pc>=0&&pc<LEVEL_COLS&&pr>=0&&pr<LEVEL_ROWS&&G.grid[Math.floor((p.y+p.h/2)/TILE)]&&G.grid[Math.floor((p.y+p.h/2)/TILE)][pc]){
-    if(G.grid[Math.floor((p.y+p.h/2)/TILE)][pc].type===5) winPlayer();
+  // Checkpoint
+  if(pc>=0&&pc<LEVEL_COLS&&pr>=0&&pr<LEVEL_ROWS){
+    const mid=Math.floor((p.y+p.h/2)/TILE);
+    if(mid>=0&&mid<LEVEL_ROWS&&G.grid[mid]&&G.grid[mid][pc]&&G.grid[mid][pc].type===13){
+      if(G.checkpointX!==pc*TILE){
+        G.checkpointX=pc*TILE; G.checkpointY=p.y;
+        spawnParticles(p.x+p.w/2,p.y,'#ffd60a',15);
+      }
+    }
+    // Goal
+    if(mid>=0&&mid<LEVEL_ROWS&&G.grid[mid]&&G.grid[mid][pc]&&G.grid[mid][pc].type===5) winPlayer();
   }
   // Coins
   G.coins.forEach(coin=>{
@@ -1037,10 +1126,15 @@ function updatePlayer(){
     if(e.dead) return;
     if(rectsOverlap(p,e)){
       if(p.vy>0&&p.y+p.h<e.y+e.h/2+8){
-        e.dead=true;G.score+=200;p.vy=-8;
-        spawnParticles(e.x+e.w/2,e.y+e.h/2,e.color,10);
+        e.dead=true; G.score+=e.isBig?500:200; p.vy=-8;
+        spawnParticles(e.x+e.w/2,e.y+e.h/2,e.color,e.isBig?20:10);
       } else killPlayer();
     }
+  });
+  // Projectile collisions
+  G.projectiles.forEach(proj=>{
+    if(proj.dead) return;
+    if(rectsOverlap(p,proj)){ proj.dead=true; killPlayer(); }
   });
   p.animT++;
   // Camera follow
@@ -1059,6 +1153,14 @@ function killPlayer(){
   G.lives--;
   updateHUDLabels();
   G.deathTimer=80;
+}
+
+// Respawn at checkpoint (already set in updatePlayer)
+function respawnPlayer(){
+  const p=defaultPlayer();
+  p.x=G.checkpointX;
+  p.y=G.checkpointY-p.h;
+  G.player=p;
 }
 function winPlayer(){
   const p=G.player;
@@ -1083,20 +1185,63 @@ function winPlayer(){
 function updateEnemies(){
   G.enemies.forEach(e=>{
     if(e.dead){e.deathAnim+=0.04;return;}
+
+    if(e.type==='cannon'){
+      e.fireTimer--;
+      if(e.fireTimer<=0){
+        e.fireTimer=100;
+        G.projectiles.push({x:e.x-8,y:e.y+TILE/2-5,w:10,h:10,vx:-4.5,vy:0,dead:false,color:e.color||'#06d6a0'});
+      }
+      return;
+    }
+
+    if(e.type==='dropper'){
+      const p=G.player;
+      const dist=Math.abs((e.x+e.w/2)-(p.x+p.w/2));
+      if(!e.dropping && dist<96 && !G.player.dead){ e.dropping=true; }
+      if(e.dropping){
+        e.vy+=0.7;
+        e.y+=e.vy;
+        if(e.y>LEVEL_ROWS*TILE+32){ e.dead=true; }
+        if(!G.player.dead&&rectsOverlap(G.player,e)) killPlayer();
+      }
+      return;
+    }
+
+    // Normal / Big Goomba
     e.vy+=0.55;
-    // Edge detection: check if the tile ahead + below is empty (a drop)
-    // Only do this when on the ground
     if(e.onGround){
-      const lookAhead = e.vx>0 ? Math.floor((e.x+e.w+2)/TILE) : Math.floor((e.x-2)/TILE);
-      const belowRow = Math.floor((e.y+e.h+1)/TILE);
-      const aheadEmpty = !isSolid(belowRow, lookAhead);
-      if(aheadEmpty) e.vx*=-1;
+      const lookAhead=e.vx>0?Math.floor((e.x+e.w+2)/TILE):Math.floor((e.x-2)/TILE);
+      const belowRow=Math.floor((e.y+e.h+1)/TILE);
+      if(!isSolid(belowRow,lookAhead)) e.vx*=-1;
     }
     resolveEnt(e);
     if(e.x<0){e.x=0;e.vx*=-1;}
     if(e.x+e.w>LEVEL_COLS*TILE){e.x=LEVEL_COLS*TILE-e.w;e.vx*=-1;}
   });
   G.enemies=G.enemies.filter(e=>!e.dead||e.deathAnim<2);
+}
+
+function updateProjectiles(){
+  G.projectiles.forEach(p=>{
+    if(p.dead) return;
+    p.x+=p.vx; p.y+=p.vy;
+    const c=Math.floor((p.x+p.w/2)/TILE),r=Math.floor((p.y+p.h/2)/TILE);
+    if(r>=0&&r<LEVEL_ROWS&&c>=0&&c<LEVEL_COLS&&isSolid(r,c)) p.dead=true;
+    if(p.x<-32||p.x>LEVEL_COLS*TILE+32) p.dead=true;
+  });
+  G.projectiles=G.projectiles.filter(p=>!p.dead);
+}
+
+function drawProjectiles(){
+  G.projectiles.forEach(p=>{
+    ctx.save();
+    ctx.fillStyle=p.color||'#06d6a0';
+    ctx.shadowColor=p.color||'#06d6a0';
+    ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(p.x+p.w/2,p.y+p.h/2,6,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
 }
 function updateCoins(){ G.coins.forEach(c=>c.anim+=0.06); }
 function spawnParticles(x,y,color,n){
@@ -1200,12 +1345,54 @@ function drawTile(t,x,y){
     const grad=ctx.createLinearGradient(x,y+lavaOff,x,y+TILE);
     grad.addColorStop(0,'#ff9f1c');grad.addColorStop(0.5,'#e63946');grad.addColorStop(1,'#9d0208');
     ctx.fillStyle=grad;ctx.fillRect(x,y,TILE,TILE);
-    // Bubbles
     for(let i=0;i<3;i++){
       const bx=x+5+i*9,by=y+TILE-5+Math.sin(G.frame*0.08+i)*3;
       ctx.fillStyle='rgba(255,160,0,0.6)';
       ctx.beginPath();ctx.arc(bx,by,3,0,Math.PI*2);ctx.fill();
     }
+  } else if(t.type===8){
+    // Arrow block — orange with arrow
+    ctx.fillStyle=t.color||'#fb5607';
+    ctx.fillRect(x,y,TILE,TILE);
+    ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,TILE-1,TILE-1);
+    ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font='bold 20px serif';ctx.textAlign='center';
+    ctx.fillText('→',x+TILE/2,y+TILE/2+7);
+  } else if(t.type===9){
+    // Ice block — light blue, shiny
+    ctx.fillStyle='#caf0f8';
+    ctx.fillRect(x,y,TILE,TILE);
+    ctx.strokeStyle='#90e0ef';ctx.lineWidth=1.5;ctx.strokeRect(x+.5,y+.5,TILE-1,TILE-1);
+    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fillRect(x+3,y+3,TILE-6,6);
+    ctx.fillStyle='rgba(144,224,239,0.4)';ctx.fillRect(x+4,y+12,8,TILE-16);
+  } else if(t.type===10){
+    // Dropper — show as hanging spike in build mode
+    if(G.mode==='build'){
+      ctx.fillStyle=t.color||'#ff006e';
+      ctx.beginPath();ctx.arc(x+TILE/2,y+10,9,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.moveTo(x+TILE/2-8,y+18);ctx.lineTo(x+TILE/2,y+TILE-2);ctx.lineTo(x+TILE/2+8,y+18);ctx.closePath();ctx.fill();
+    }
+  } else if(t.type===11){
+    // Big Goomba spawn marker
+    if(G.mode==='build'){
+      ctx.fillStyle=t.color||'#8338ec';
+      ctx.beginPath();ctx.ellipse(x+TILE/2,y+TILE/2,13,13,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 13px monospace';ctx.textAlign='center';
+      ctx.fillText('BG',x+TILE/2,y+TILE/2+5);
+    }
+  } else if(t.type===12){
+    // Cannon
+    ctx.fillStyle=t.color||'#06d6a0';
+    ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
+    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2;ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+    ctx.fillStyle='#fff';ctx.font='bold 18px serif';ctx.textAlign='center';
+    ctx.fillText('💣',x+TILE/2,y+TILE/2+6);
+  } else if(t.type===13){
+    // Checkpoint flag
+    const flagWave=Math.sin(G.frame*0.1)*2;
+    ctx.fillStyle='#555';ctx.fillRect(x+TILE/2-2,y+4,4,TILE-6);
+    const activated = G.checkpointX===x;
+    ctx.fillStyle=activated?'#ffd60a':'rgba(255,214,10,0.4)';
+    ctx.beginPath();ctx.moveTo(x+TILE/2+2,y+6+flagWave);ctx.lineTo(x+TILE-4,y+13+flagWave);ctx.lineTo(x+TILE/2+2,y+20+flagWave);ctx.closePath();ctx.fill();
   }
 }
 
@@ -1243,44 +1430,68 @@ function drawCoins(){
 }
 
 function drawGoomba(e){
+  if(e.type==='cannon'){
+    // Drawn as tiles via drawGrid — just show firing animation
+    if(e.fireTimer<15){
+      ctx.save();ctx.globalAlpha=(e.fireTimer/15)*0.6;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(e.x-4,e.y+TILE/2,6,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+    return;
+  }
+  if(e.type==='dropper'){
+    if(e.dead) return;
+    if(!e.dropping){
+      // Hang from ceiling — draw chain
+      ctx.strokeStyle='rgba(255,0,110,0.4)';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(e.x+e.w/2,e.originY-8);ctx.lineTo(e.x+e.w/2,e.y);ctx.stroke();
+    }
+    ctx.save();
+    ctx.fillStyle=e.color||'#ff006e';
+    ctx.beginPath();ctx.arc(e.x+e.w/2,e.y+10,e.w/2,0,Math.PI*2);ctx.fill();
+    // Spike bottom
+    ctx.beginPath();ctx.moveTo(e.x+4,e.y+18);ctx.lineTo(e.x+e.w/2,e.y+e.h+2);ctx.lineTo(e.x+e.w-4,e.y+18);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 10px monospace';ctx.textAlign='center';
+    ctx.fillText('⬇',e.x+e.w/2,e.y+14);
+    ctx.restore();
+    return;
+  }
   if(e.dead){
     if(e.deathAnim<1.5){
       ctx.save();ctx.globalAlpha=1-e.deathAnim;
-      ctx.translate(e.x+e.w/2,e.y+e.h/2); // world coords
+      ctx.translate(e.x+e.w/2,e.y+e.h/2);
       ctx.rotate(e.deathAnim*Math.PI*2);ctx.scale(1+e.deathAnim,1-e.deathAnim*0.5);
       renderGoombaShape(e,0,0);ctx.restore();
     }
     return;
   }
-  renderGoombaShape(e, e.x, e.y); // world coords
+  renderGoombaShape(e, e.x, e.y);
 }
 
 function renderGoombaShape(e,ox,oy){
-  const dir=e.vx<0?-1:1;
-  ctx.save();ctx.translate(ox+e.w/2,oy+e.h/2);ctx.scale(dir,1);
+  const dir=e.vx<=0?-1:1;
+  const sc=e.isBig?1.5:1;
+  ctx.save();ctx.translate(ox+e.w/2,oy+e.h/2);ctx.scale(dir*sc,sc);
   const bob=e.onGround?Math.sin(G.frame*0.2+e.x)*1.5:0;
-  // Shadow
-  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(0,e.h/2+2,10,3,0,0,Math.PI*2);ctx.fill();
-  // Body — mushroom head
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(0,e.h/(2*sc)+2,10,3,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle=e.color||'#8B4513';
   ctx.beginPath();ctx.ellipse(0,bob,13,14,0,0,Math.PI*2);ctx.fill();
-  // Spots
+  // Big goomba gets a crown
+  if(e.isBig){
+    ctx.fillStyle='#ffd700';
+    ctx.beginPath();ctx.moveTo(-8,bob-14);ctx.lineTo(-6,bob-20);ctx.lineTo(-2,bob-16);ctx.lineTo(0,bob-22);ctx.lineTo(2,bob-16);ctx.lineTo(6,bob-20);ctx.lineTo(8,bob-14);ctx.closePath();ctx.fill();
+  }
   ctx.fillStyle='rgba(255,255,255,0.2)';
   ctx.beginPath();ctx.arc(-4,bob-5,3,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.arc(4,bob-7,2,0,Math.PI*2);ctx.fill();
-  // White underbelly
   ctx.fillStyle='rgba(255,220,180,0.85)';
   ctx.beginPath();ctx.ellipse(0,bob+4,8,7,0,0,Math.PI*2);ctx.fill();
-  // Eyes
   ctx.fillStyle='#fff';ctx.fillRect(-8,bob-9,6,5);ctx.fillRect(2,bob-9,6,5);
   ctx.fillStyle='#000';ctx.fillRect(-7,bob-8,3,3);ctx.fillRect(3,bob-8,3,3);
-  // Angry eyebrows
   ctx.strokeStyle='#000';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(-9,bob-12);ctx.lineTo(-2,bob-10);ctx.stroke();
   ctx.beginPath();ctx.moveTo(8,bob-12);ctx.lineTo(2,bob-10);ctx.stroke();
-  // Mouth frown
   ctx.beginPath();ctx.arc(0,bob+2,5,0.3,Math.PI-0.3,true);ctx.stroke();
-  // Feet
   ctx.fillStyle='#2b2b2b';
   ctx.beginPath();ctx.ellipse(-6,bob+13,5,3,0.2,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.ellipse(6,bob+13,5,3,-0.2,0,Math.PI*2);ctx.fill();
@@ -1398,8 +1609,10 @@ function gameLoop(){
   if(G.mode==='play'){
     drawCoins();
     G.enemies.forEach(drawGoomba);
+    drawProjectiles();
     updatePlayer();
     updateEnemies();
+    updateProjectiles();
     updateCoins();
     updateParticles();
     drawParticles();
@@ -1411,12 +1624,8 @@ function gameLoop(){
       G.deathTimer--;
       drawMsgOverlay(G.lives>0?'OUCH!':'GAME OVER',G.lives>0?`${G.lives} ${G.lives===1?'life':'lives'} left — respawning...`:'No lives left — exiting...','#e63946');
       if(G.deathTimer===1){
-        if(G.lives>0){
-          G.player=defaultPlayer();
-          // Only respawn enemies that were already dead (stomped), not the whole level
-          // Coins already collected stay collected — don't respawn anything
-        }
-        else{exitGame();}
+        if(G.lives>0){ respawnPlayer(); }
+        else{ exitGame(); }
       }
     }
     if(G.winTimer>0){
@@ -1463,106 +1672,139 @@ function saveLevel(){
 function clearLevel(){ if(confirm('Clear the entire level?')){ G.grid=createGrid(); G.enemies=[]; G.coins=[]; } }
 
 // =============================================
-// STORY LEVEL GENERATOR
+// STORY LEVEL GENERATOR (50 levels, 10 worlds)
 // =============================================
 function generateStoryLevel(num){
   const grid=createGrid();
   const rng=(seed)=>{ let s=seed; return ()=>{ s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }; };
   const r=rng(num*31337);
   const worldIdx=Math.floor((num-1)/5);
-  const platformColors=[['#52b788','#95d5b2'],['#e9c46a','#f4a261'],['#90e0ef','#caf0f8'],['#8338ec','#b5179e']];
+  const platformColors=[
+    ['#52b788','#95d5b2'], // Grasslands
+    ['#e9c46a','#f4a261'], // Desert
+    ['#90e0ef','#caf0f8'], // Ice
+    ['#8338ec','#b5179e'], // Sky
+    ['#606c38','#283618'], // Swamp
+    ['#e63946','#9d0208'], // Volcano
+    ['#48cae4','#0077b6'], // Crystal
+    ['#4cc9f0','#4361ee'], // Storm
+    ['#7209b7','#3a0ca3'], // Shadow
+    ['#ffbe0b','#fb8500'], // Endgame
+  ];
   const pc=platformColors[worldIdx]||platformColors[0];
-  const difficulty=((num-1)%5)+1; // 1-5
+  const difficulty=Math.min(10, Math.floor((num-1)/5)*2 + ((num-1)%5) + 1);
 
-  // Clear middle floor (keep solid start+end)
+  // Clear middle floor
   for(let c=6;c<LEVEL_COLS-7;c++){ grid[LEVEL_ROWS-1][c].type=0; grid[LEVEL_ROWS-2][c].type=0; }
 
-  // Solid start platform (wide)
+  // Start platform
   for(let c=0;c<9;c++){ grid[LEVEL_ROWS-1][c]={type:1,color:pc[0]}; grid[LEVEL_ROWS-2][c]={type:1,color:pc[0]}; }
 
-  // Solid end platform (wide)
+  // End platform
   for(let c=LEVEL_COLS-9;c<LEVEL_COLS;c++){
     grid[LEVEL_ROWS-1][c]={type:1,color:pc[0]};
     grid[LEVEL_ROWS-2][c]={type:1,color:pc[0]};
   }
 
-  // Goal flag on end platform
+  // Goal flag
   grid[LEVEL_ROWS-6][LEVEL_COLS-5]={type:5,color:'#ffbe0b'};
   grid[LEVEL_ROWS-5][LEVEL_COLS-5]={type:1,color:'#aaa'};
 
-  // Generate platforms — carefully controlled so gaps are always jumpable
-  // Max reachable horizontal distance at spd=4.2, jump=-13.5, grav=0.45:
-  // airtime ≈ 2*13.5/0.45 = 60 frames, horizontal = 4.2*60 ≈ 250px ≈ 7.8 tiles
-  // Keep gaps to max 5 tiles (safe), max vertical rise to 3 tiles
-  const maxGapX = 4 + Math.floor(difficulty * 0.4); // 4–6 tiles max gap (safe)
-  const maxRiseY = 2 + Math.floor(difficulty * 0.3); // 2–3 tiles max rise
-  const minPlatLen = Math.max(2, 5 - difficulty);     // shorter platforms on harder levels
-  const maxPlatLen = 7 - difficulty;                   // 6 down to 2
-
-  const numPlatforms = 10 + difficulty * 2; // 12–20 platforms
+  const maxGapX = Math.min(6, 3 + Math.floor(difficulty * 0.35));
+  const maxRiseY = Math.min(4, 2 + Math.floor(difficulty * 0.25));
+  const minPlatLen = Math.max(2, 5 - Math.floor(difficulty*0.4));
+  const maxPlatLen = Math.max(3, 7 - Math.floor(difficulty*0.4));
+  const numPlatforms = 10 + difficulty * 2;
   let cx = 9, cy = LEVEL_ROWS - 3;
 
   for(let i=0;i<numPlatforms;i++){
     const len = minPlatLen + Math.floor(r() * (maxPlatLen - minPlatLen + 1));
-    // Gap: always at least 2 tiles, never more than maxGapX
     const dx = 2 + Math.floor(r() * (maxGapX - 1));
-    // Vertical: bias toward same level or slight rise; clamp tightly
     const rawDy = Math.floor(r() * (maxRiseY * 2 + 1)) - maxRiseY;
     const dy = Math.max(-maxRiseY, Math.min(maxRiseY, rawDy));
 
     cx = Math.min(cx + dx, LEVEL_COLS - 12);
-    cy = Math.max(5, Math.min(LEVEL_ROWS - 4, cy + dy));
+    cy = Math.max(4, Math.min(LEVEL_ROWS - 4, cy + dy));
 
-    // Place platform
+    // World-specific platform tile type
+    let platType = 1;
+    if(worldIdx===2 && r()<0.5) platType=9; // Ice world — ice blocks
+    if(worldIdx===6 && r()<0.3) platType=9; // Crystal — ice-like
+
     for(let j=0;j<len;j++){
-      if(cx+j < LEVEL_COLS-8) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      if(cx+j < LEVEL_COLS-8) grid[cy][cx+j]={type:platType,color:pc[Math.floor(r()*pc.length)]};
     }
 
-    // Coins above platform (only on difficulty 1-3, more sparsely on harder)
-    if(r() < 0.75 - difficulty*0.05){
+    // Coins above platform
+    if(r() < 0.75 - difficulty*0.03){
       for(let j=0;j<len;j++){
         if(r() < 0.5 && cy-1>=0 && cx+j < LEVEL_COLS-8)
           grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
       }
     }
 
-    // Goombas — only on difficulty 2+, lower chance
+    // Checkpoint every ~10 platforms on harder levels
+    if(difficulty>=5 && i===Math.floor(numPlatforms/2) && len>=3){
+      grid[cy][cx+Math.floor(len/2)]={type:13,color:'#ffd60a'};
+    }
+
+    // Goombas — world 1+
     if(difficulty>=2 && r()<0.25 && len>=3 && cx+1<LEVEL_COLS-8){
-      const gCol=worldIdx===0?'#8B4513':worldIdx===1?'#e9c46a':worldIdx===2?'#90e0ef':'#8338ec';
+      const gCol=pc[0];
       grid[cy-1][cx+1]={type:4,color:gCol};
     }
 
-    // Spikes — only on difficulty 3+, rare, never on first tile of platform
-    if(difficulty>=3 && r()<0.2 && len>=3){
+    // Big Goomba — world 5+
+    if(worldIdx>=4 && r()<0.2 && len>=4 && cx+1<LEVEL_COLS-8){
+      grid[cy-2][cx+1]={type:11,color:pc[0]};
+    }
+
+    // Spikes — world 3+
+    if(difficulty>=4 && r()<0.2 && len>=3){
       const spikePos = 1 + Math.floor(r()*(len-2));
       if(cx+spikePos < LEVEL_COLS-8) grid[cy][cx+spikePos]={type:2,color:'#ccc'};
     }
 
-    // Lava pits in floor gaps — only world 2+, rare
+    // Lava — world 2+
     if(worldIdx>=1 && r()<0.25 && cx>10){
       for(let lc=cx-2;lc<cx&&lc<LEVEL_COLS-8;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
     }
 
     // Bounce pads — world 3+
-    if(worldIdx>=2 && r()<0.35 && cx<LEVEL_COLS-10){
+    if(worldIdx>=2 && r()<0.3 && cx<LEVEL_COLS-10){
       grid[cy][cx]={type:6,color:'#3a86ff'};
     }
 
-    // Advance cx past the platform so next gap starts after it
+    // Arrow block — world 4+
+    if(worldIdx>=3 && r()<0.2 && len>=2){
+      grid[cy][cx]={type:8,color:'#fb5607'};
+    }
+
+    // Dropper — world 5+, place on ceiling
+    if(worldIdx>=4 && r()<0.2 && cx+2<LEVEL_COLS-8){
+      const dropRow=Math.max(0, cy-4);
+      if(dropRow>=0) grid[dropRow][cx+Math.floor(len/2)]={type:10,color:'#ff006e'};
+    }
+
+    // Cannon — world 6+
+    if(worldIdx>=5 && r()<0.2 && cx+3<LEVEL_COLS-8){
+      grid[cy-1][cx+Math.floor(len/2)]={type:12,color:'#06d6a0'};
+    }
+
     cx = cx + len;
   }
 
-  // Fill the very bottom row with spikes in the gap areas (death floor)
-  // and keep solid ground under start/end platforms
+  // Death floor spikes
   for(let c=9;c<LEVEL_COLS-9;c++){
     if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0){
-      grid[LEVEL_ROWS-1][c]={type:2,color:'#aaa'}; // spike in pits
+      // Volcano world — lava floor
+      grid[LEVEL_ROWS-1][c]=worldIdx===5?{type:7,color:'#e63946'}:{type:2,color:'#aaa'};
     }
   }
-  // by adding a bridge if cx is too far from end
+
+  // Filler bridge if too far from end
   const endStart = LEVEL_COLS - 9;
   if(endStart - cx > 6){
-    // Add a filler platform halfway
     const midC = Math.floor((cx + endStart) / 2);
     const midR = Math.max(5, Math.min(LEVEL_ROWS-4, cy));
     for(let j=0;j<5;j++) if(midC+j<endStart) grid[midR][midC+j]={type:1,color:pc[0]};
