@@ -751,7 +751,7 @@ function showEndlessLevel(){
   // Combine run seed + level number so each level is unique AND changes every run
   const levelSeed=endlessRunSeed*1000+endlessLevelNum;
   const lvlData=generateStoryLevel(levelSeed, worldIdx, difficulty, true); // true = endless (fewer coins)
-  const modeLabels={staircase:'🪜 Staircase',gauntlet:'⚔ Gauntlet',islands:'🏝 Islands',cavern:'🦇 Cavern',zigzag:'⚡ Zigzag',multilevel:'🏗 Multi-Tier',lava_run:'🔥 Lava Run',checkerboard:'♟ Checker',sprint:'💨 Sprint',tower:'🗼 Tower',standard:'🏃 Sprint'};
+  const modeLabels={staircase:'🪜 Staircase',gauntlet:'⚔ Gauntlet',islands:'🏝 Islands',cavern:'🦇 Cavern',zigzag:'⚡ Zigzag',multilevel:'🏗 Multi-Tier',lava_run:'🔥 Lava Run',checkerboard:'♟ Checker',sprint:'💨 Sprint',tower:'🏀 Bounce Rush',standard:'🏃 Run'};
   lvlData.name=`♾ #${endlessLevelNum} — ${modeLabels[lvlData.layoutMode]||'Run'}`;
   showScreen('game');
   requestAnimationFrame(()=>startGameEngine(lvlData,true,false,null,true)); // last param = isEndless
@@ -965,20 +965,21 @@ function buildShopUI(){
     grid.appendChild(card);
   });
 
-  // Trails and Hats buttons at the top of shop
+  // Trails button at the top of shop — use stable ID to avoid duplication
   const shopInner=document.querySelector('.shop-inner');
   if(shopInner){
-    // Remove old injected buttons to avoid duplicates
-    shopInner.querySelectorAll('.shop-extra-btn').forEach(b=>b.remove());
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;gap:12px;padding:0 0 12px 0;';
-    const trailBtn=document.createElement('button');
-    trailBtn.className='shop-extra-btn';
-    trailBtn.style.cssText='font-family:Boogaloo,cursive;font-size:16px;padding:9px 22px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;';
-    trailBtn.textContent='💨 Coin Trails';
-    trailBtn.onclick=showTrailShop;
-    row.appendChild(trailBtn);
-    shopInner.insertBefore(row,shopInner.firstChild);
+    let row=document.getElementById('trail-btn-row');
+    if(!row){
+      row=document.createElement('div');
+      row.id='trail-btn-row';
+      row.style.cssText='display:flex;gap:12px;padding:0 0 16px 0;';
+      const trailBtn=document.createElement('button');
+      trailBtn.style.cssText='font-family:Boogaloo,cursive;font-size:16px;padding:9px 22px;background:rgba(255,190,11,0.12);border:2px solid var(--yellow);color:var(--yellow);cursor:pointer;';
+      trailBtn.textContent='💨 Coin Trails';
+      trailBtn.onclick=showTrailShop;
+      row.appendChild(trailBtn);
+      shopInner.insertBefore(row,shopInner.firstChild);
+    }
   }
 }
 function drawSkinPreview(canvas,skin){
@@ -3326,47 +3327,49 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     fillDeathFloor();
 
   } else if(layoutMode==='lava_run'){
-    // Wide lava floor everywhere, player jumps between floating platforms
-    // All platforms are 4-wide at fixed heights, gaps 2-3 tiles
+    // Wide lava floor everywhere, player jumps between floating platforms at 3 heights
     const ROWS = [LEVEL_ROWS-5, LEVEL_ROWS-8, LEVEL_ROWS-11];
     let cx=9, rowIdx=0;
     // Fill entire floor with lava first
     for(let c=9; c<LEVEL_COLS-9; c++) grid[LEVEL_ROWS-1][c]={type:7,color:'#e63946'};
+    let lastCy=ROWS[0];
     while(cx < PLACE_END - 4){
       const cy = ROWS[rowIdx % ROWS.length];
+      lastCy=cy;
       const plen = Math.max(3, Math.min(4+Math.floor(r()*3), PLACE_END-cx-2));
       for(let j=0; j<plen; j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      // Bounce pad if next platform is higher
+      // Bounce pad if next platform is higher (lower row index = higher on screen)
       const nextRow = ROWS[(rowIdx+1) % ROWS.length];
       if(nextRow < cy) grid[cy][cx]={type:6,color:'#3a86ff'};
       addCoins(cx,cy,plen); decorateSafe(cx,cy,plen);
-      const gap = 2+Math.floor(r()*2); // 2-3 tiles
+      const gap = 2+Math.floor(r()*2);
       cx += plen+gap; rowIdx++;
     }
-    bridgeToEnd(cx, ROWS[rowIdx % ROWS.length]);
+    bridgeToEnd(cx, lastCy);
 
   } else if(layoutMode==='checkerboard'){
     // Dense alternating short platforms at two heights, close together
     const evenRow = LEVEL_ROWS-4;
     const oddRow  = LEVEL_ROWS-7;
-    let cx=9, even=true;
+    let cx=9, isEven=true;
+    let lastCy=evenRow;
     while(cx < PLACE_END - 4){
-      const cy = even ? evenRow : oddRow;
+      const cy = isEven ? evenRow : oddRow;
+      lastCy=cy;
       const plen = Math.max(3, Math.min(4+Math.floor(r()*2), PLACE_END-cx-2));
       for(let j=0; j<plen; j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      if(!even) grid[cy][cx]={type:6,color:'#3a86ff'}; // bounce up on odd (higher) row
+      if(!isEven) grid[cy][cx]={type:6,color:'#3a86ff'}; // bounce up on high row
       addCoins(cx,cy,plen); decorateSafe(cx,cy,plen);
-      const gap = 1+Math.floor(r()*2); // tight 1-2 tile gaps
+      const gap = 1+Math.floor(r()*2);
       for(let c=cx+plen; c<cx+plen+gap && c<PLACE_END; c++)
         grid[LEVEL_ROWS-1][c]={type:worldIdx===5?7:2,color:'#e63946'};
-      cx += plen+gap; even=!even;
+      cx += plen+gap; isEven=!isEven;
     }
-    bridgeToEnd(cx, even ? evenRow : oddRow);
+    bridgeToEnd(cx, lastCy);
     fillDeathFloor();
 
   } else if(layoutMode==='sprint'){
-    // Flat ground with narrow spike/enemy corridors — test reflex not platforming
-    // Wide platform, gaps only 1 tile, lots of obstacles ON the platform
+    // Flat run with dense surface hazards — test reflexes not jumping
     let cx=9, cy=LEVEL_ROWS-4;
     while(cx < PLACE_END - 4){
       const plen = Math.max(6, Math.min(10+Math.floor(r()*6), PLACE_END-cx-2));
@@ -3374,49 +3377,41 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
       // Dense obstacles on surface
       for(let j=2; j<plen-2; j+=3){
         const roll=r();
-        if(roll<0.35) grid[cy][cx+j]={type:2,color:'#ccc'}; // spike on floor
+        if(roll<0.35) grid[cy][cx+j]={type:2,color:'#ccc'};
         else if(roll<0.55 && cy-1>=0) grid[cy-1][cx+j]={type:4,color:pc[0]};
         else if(roll<0.70 && cy-1>=0) grid[cy-1][cx+j]={type:12,color:'#06d6a0'};
       }
-      // Small height jog ±1 row
-      const dy = Math.floor(r()*3)-1;
       addCoins(cx,cy,plen);
-      const gap = 1; // always 1-tile gap — this mode is about timing not jumping
+      const gap = 1;
       for(let c=cx+plen; c<cx+plen+gap && c<PLACE_END; c++)
         grid[LEVEL_ROWS-1][c]={type:worldIdx===5?7:2,color:'#e63946'};
       cx += plen+gap;
+      // Height jog ±1 row applied AFTER advancing cx
+      const dy = Math.floor(r()*3)-1;
       cy = Math.max(LEVEL_ROWS-7, Math.min(LEVEL_ROWS-4, cy+dy));
     }
     bridgeToEnd(cx, cy);
     fillDeathFloor();
 
   } else if(layoutMode==='tower'){
-    // Player climbs a series of tall shafts using bounce pads and one-ways
-    const SHAFT_W = 6; // tiles wide per shaft
-    let cx=9;
-    const baseRow=LEVEL_ROWS-4;
-    while(cx < PLACE_END - SHAFT_W){
-      const shaftH = 3+Math.floor(r()*4); // 3-6 rows tall
-      // Floor of shaft
-      for(let j=0; j<SHAFT_W; j++) grid[baseRow][cx+j]={type:1,color:pc[0]};
-      grid[baseRow][cx+1]={type:6,color:'#3a86ff'}; // bounce pad
-      // Walls (not full — player can clip out)
-      for(let row=baseRow-shaftH; row<baseRow; row++){
-        if(row>=0 && r()<0.4){
-          // One-way ledge inside shaft
-          const ledgeW=Math.floor(r()*2)+2;
-          const ledgeX=cx+1+Math.floor(r()*(SHAFT_W-ledgeW-1));
-          for(let j=0; j<ledgeW; j++) if(ledgeX+j<cx+SHAFT_W) grid[row][ledgeX+j]={type:15,color:pc[0]};
-        }
-      }
-      // Top of shaft: solid platform to land on
-      const topRow=Math.max(4,baseRow-shaftH);
-      for(let j=0; j<SHAFT_W; j++) grid[topRow][cx+j]={type:1,color:pc[0]};
-      addCoins(cx,topRow,SHAFT_W);
-      decorateSafe(cx,topRow,SHAFT_W);
-      cx += SHAFT_W + 1+Math.floor(r()*2);
+    // Bounce rush — short platforms, every one has a bounce pad, rapid vertical changes
+    // Heights vary freely but EVERY platform has a bounce pad so nothing is unreachable
+    let cx=9, cy=LEVEL_ROWS-4;
+    while(cx < PLACE_END - 4){
+      const plen = Math.max(3, Math.min(4+Math.floor(r()*3), PLACE_END-cx-2));
+      for(let j=0; j<plen; j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      // Always a bounce pad — this is the entire gimmick of the mode
+      grid[cy][cx+Math.floor(plen/2)]={type:6,color:'#3a86ff'};
+      addCoins(cx,cy,plen); decorateSafe(cx,cy,plen);
+      const gap = 1+Math.floor(r()*3); // 1-3 tiles
+      for(let c=cx+plen; c<cx+plen+gap && c<PLACE_END; c++)
+        grid[LEVEL_ROWS-1][c]={type:worldIdx===5?7:2,color:'#e63946'};
+      cx += plen+gap;
+      // Large height variation is fine because bounce pads guarantee reachability
+      const dy = Math.floor(r()*7)-3; // -3 to +3 rows
+      cy = Math.max(4, Math.min(LEVEL_ROWS-4, cy+dy));
     }
-    bridgeToEnd(cx, LEVEL_ROWS-4);
+    bridgeToEnd(cx, cy);
     fillDeathFloor();
 
   } else {
@@ -4391,9 +4386,11 @@ function spawnTrail(x,y){
   if(color==='rainbow'){_trailHue=(_trailHue+15)%360;color=`hsl(${_trailHue},100%,60%)`;}
   for(let i=0;i<3;i++){
     G.particles.push({
-      x:x+(Math.random()-0.5)*8,y:y+(Math.random()-0.5)*8,
-      vx:(Math.random()-0.5)*1.5,vy:-Math.random()*1.5-0.5,
-      life:0.6+Math.random()*0.3,color,size:3+Math.random()*3,isTrail:true
+      x:x+(Math.random()-0.5)*8, y:y+(Math.random()-0.5)*8,
+      vx:(Math.random()-0.5)*1.5, vy:-Math.random()*1.5-0.5,
+      life:0.7+Math.random()*0.3, color,
+      r:3+Math.random()*3,  // use r (not size) so drawParticles renders it
+      isTrail:true
     });
   }
 }
