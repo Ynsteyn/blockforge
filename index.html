@@ -540,7 +540,12 @@ const SKINS=[
   {id:'pirate',  name:"Cap'n Jack",   price:10000,  colors:{body:'#f4a261',shirt:'#b5451b',pants:'#3d2b1f',shoe:'#2b2b2b',hair:'#2b2b2b'}},
   {id:'ghost',   name:'Boo',          price:50000,  colors:{body:'rgba(255,255,255,0.7)',shirt:'rgba(200,200,255,0.5)',pants:'rgba(180,180,220,0.5)',shoe:'rgba(150,150,200,0.5)',hair:'rgba(255,255,255,0.4)'}},
   {id:'devil',   name:'El Diablo',    price:100000, colors:{body:'#e63946',shirt:'#9d0208',pants:'#370617',shoe:'#1a0000',hair:'#ff4500'}},
-  {id:'admin',   name:'👑 The Admin',  price:0,      colors:{body:'#ffd700',shirt:'#ff4500',pants:'#1a1a1a',shoe:'#ff4500',hair:'#ffd700'}, adminOnly:true},
+  // World-unlock exclusive skins — earned by completing worlds, cannot be bought
+  {id:'explorer', name:'The Explorer', price:0, worldUnlock:2, colors:{body:'#d4a373',shirt:'#606c38',pants:'#283618',shoe:'#6b4226',hair:'#3d2b1f'}},
+  {id:'ice',      name:'Frost Walker',  price:0, worldUnlock:4, colors:{body:'#caf0f8',shirt:'#90e0ef',pants:'#0077b6',shoe:'#023e8a',hair:'#e0f7fa'}},
+  {id:'demon',    name:'Void Stalker',  price:0, worldUnlock:6, colors:{body:'#7209b7',shirt:'#3a0ca3',pants:'#10002b',shoe:'#240046',hair:'#9d4edd'}},
+  {id:'golden',   name:'Gold Champion', price:0, worldUnlock:8, colors:{body:'#ffd700',shirt:'#fb8500',pants:'#e85d04',shoe:'#9d0208',hair:'#ffbe0b'}},
+  {id:'admin',   name:'👑 The Admin',  price:0, colors:{body:'#ffd700',shirt:'#ff4500',pants:'#1a1a1a',shoe:'#ff4500',hair:'#ffd700'}, adminOnly:true},
 ];
 
 // =============================================
@@ -614,7 +619,8 @@ function showEndlessLevel(){
   // Combine run seed + level number so each level is unique AND changes every run
   const levelSeed=endlessRunSeed*1000+endlessLevelNum;
   const lvlData=generateStoryLevel(levelSeed, worldIdx, difficulty, true); // true = endless (fewer coins)
-  lvlData.name=`♾ ENDLESS #${endlessLevelNum}`;
+  const modeLabels={staircase:'🪜 Staircase',gauntlet:'⚔ Gauntlet',islands:'🏝 Islands',cavern:'🦇 Cavern',zigzag:'⚡ Zigzag',multilevel:'🏗 Multi-Tier',standard:'🏃 Sprint'};
+  lvlData.name=`♾ #${endlessLevelNum} — ${modeLabels[lvlData.layoutMode]||'Run'}`;
   showScreen('game');
   requestAnimationFrame(()=>startGameEngine(lvlData,true,false,null,true)); // last param = isEndless
 }
@@ -719,37 +725,95 @@ function deleteLevel(i){ const s=getSave(); s.myLevels.splice(i,1); writeSave(s)
 // =============================================
 function buildShopUI(){
   const s=getSave();
+  const worldsCompleted=Math.floor(s.storyProgress/5); // 0-10
+
+  // Auto-grant world-unlock skins the player has earned
+  let saveNeeded=false;
+  SKINS.forEach(skin=>{
+    if(skin.worldUnlock&&worldsCompleted>=skin.worldUnlock&&!s.owned.includes(skin.id)){
+      s.owned.push(skin.id); saveNeeded=true;
+    }
+  });
+  if(saveNeeded) writeSave(s);
+
   const grid=document.getElementById('shop-grid');
   grid.innerHTML='';
+
+  // Section headers
+  let lastSection='';
   SKINS.forEach(skin=>{
-    // Admin skin only visible to admin
     if(skin.adminOnly && !isAdmin()) return;
+
+    const section=skin.worldUnlock?'world':'buy';
+    if(section!==lastSection){
+      lastSection=section;
+      const hdr=document.createElement('div');
+      hdr.style.cssText='grid-column:1/-1;font-family:Boogaloo,cursive;font-size:18px;color:rgba(255,255,255,0.5);letter-spacing:2px;padding:8px 0 4px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:4px;';
+      hdr.textContent=section==='world'?'🌍 WORLD REWARDS — earn by completing worlds':'🛒 SHOP — buy with coins';
+      grid.appendChild(hdr);
+    }
+
     const card=document.createElement('div');
     card.className='skin-card';
     const sc=document.createElement('canvas');
     sc.className='skin-canvas'; sc.width=240; sc.height=240;
-    sc.style.imageRendering='pixelated';
-    drawSkinPreview(sc,skin);
+
+    const isOwned=s.owned.includes(skin.id);
+    const isEquipped=s.equipped===skin.id;
+    const isLocked=skin.worldUnlock&&!isOwned;
+
+    // Draw preview — greyscale if locked
+    if(isLocked){
+      // Draw greyscale version
+      drawSkinPreview(sc,skin);
+      const ctx2=sc.getContext('2d');
+      const imgData=ctx2.getImageData(0,0,240,240);
+      for(let i=0;i<imgData.data.length;i+=4){
+        const grey=imgData.data[i]*0.3+imgData.data[i+1]*0.59+imgData.data[i+2]*0.11;
+        imgData.data[i]=grey;imgData.data[i+1]=grey;imgData.data[i+2]=grey;
+      }
+      ctx2.putImageData(imgData,0,0);
+      // Lock overlay
+      ctx2.fillStyle='rgba(0,0,0,0.5)';ctx2.fillRect(0,0,240,240);
+      ctx2.fillStyle='rgba(255,255,255,0.7)';
+      ctx2.font='bold 72px sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.fillText('🔒',120,120);
+    } else {
+      drawSkinPreview(sc,skin);
+    }
+
     const nm=document.createElement('div'); nm.className='skin-name'; nm.textContent=skin.name;
-    // Reward: 20% discount per completed WORLD (every 5 levels), max 80% (4 worlds)
-    const worldsCompleted=Math.min(4, Math.floor(s.storyProgress/5));
-    const discountPct=worldsCompleted*20;
-    const discountedPrice=Math.floor(skin.price*(1-discountPct/100));
+
     const priceEl=document.createElement('div'); priceEl.className='skin-price';
-    if(skin.price===0){priceEl.textContent='FREE';}
-    else if(discountPct>0&&!s.owned.includes(skin.id)){
-      priceEl.innerHTML=`<span style="text-decoration:line-through;opacity:0.45;font-size:12px">🪙${skin.price.toLocaleString()}</span> <span style="color:#06d6a0">🪙${discountedPrice.toLocaleString()}</span><br><span style="font-size:11px;color:#06d6a0">🌍 -${discountPct}% (${worldsCompleted} world${worldsCompleted>1?'s':''})</span>`;
-    } else if(discountPct===0&&skin.price>0&&!s.owned.includes(skin.id)){
-      priceEl.innerHTML=`🪙${skin.price.toLocaleString()}<br><span style="font-size:10px;color:rgba(255,255,255,0.3)">Complete worlds for -20% each</span>`;
+    if(skin.worldUnlock){
+      if(isOwned){
+        priceEl.innerHTML=`<span style="color:#06d6a0;font-size:13px">✓ UNLOCKED</span><br><span style="font-size:10px;color:rgba(255,255,255,0.3)">World ${skin.worldUnlock} reward</span>`;
+      } else {
+        const levelsNeeded=skin.worldUnlock*5;
+        const progress=Math.min(s.storyProgress,levelsNeeded);
+        priceEl.innerHTML=`<span style="color:#ffbe0b;font-size:12px">🔒 Complete World ${skin.worldUnlock}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.35)">${progress}/${levelsNeeded} levels done</span>`;
+      }
+    } else if(skin.price===0){
+      priceEl.textContent='FREE';
     } else {
       priceEl.textContent='🪙'+skin.price.toLocaleString();
     }
+
     const btn=document.createElement('button'); btn.className='skin-buy-btn';
-    const isOwned=s.owned.includes(skin.id);
-    const isEquipped=s.equipped===skin.id;
-    if(isEquipped){btn.textContent='✓ EQUIPPED';btn.className='skin-buy-btn equipped';}
-    else if(isOwned){btn.textContent='EQUIP';btn.className='skin-buy-btn equip';btn.onclick=()=>equipSkin(skin.id);}
-    else{btn.textContent=skin.price===0?'GET FREE':'BUY';btn.className='skin-buy-btn buy';btn.onclick=()=>buySkin(skin,discountedPrice);}
+    if(isEquipped){
+      btn.textContent='✓ EQUIPPED'; btn.className='skin-buy-btn equipped';
+    } else if(isOwned){
+      btn.textContent='EQUIP'; btn.className='skin-buy-btn equip';
+      btn.onclick=()=>equipSkin(skin.id);
+    } else if(isLocked){
+      btn.textContent='LOCKED'; btn.className='skin-buy-btn owned';
+      btn.disabled=true;
+    } else {
+      btn.textContent=skin.price===0?'GET FREE':'BUY';
+      btn.className='skin-buy-btn buy';
+      btn.onclick=()=>buySkin(skin,skin.price);
+    }
+
     card.append(sc,nm,priceEl,btn);
     grid.appendChild(card);
   });
@@ -1751,11 +1815,18 @@ function winPlayer(){
     const wasProgress=s.storyProgress;
     if(G.storyLevelNum>s.storyProgress) s.storyProgress=G.storyLevelNum;
     s.storyStars[G.storyLevelNum]=true;
-    // Check if a new world boundary was crossed (every 5 levels = 1 world)
-    const worldsBefore=Math.min(4,Math.floor(wasProgress/5));
-    const worldsNow=Math.min(4,Math.floor(s.storyProgress/5));
+    // Check if a new world was completed — auto-grant world-unlock skins
+    const worldsBefore=Math.floor(wasProgress/5);
+    const worldsNow=Math.floor(s.storyProgress/5);
     if(worldsNow>worldsBefore){
-      G._worldBonusMsg=`🌍 World ${worldsNow} complete! Shop discount: -${worldsNow*20}% off all skins!`;
+      // Grant any skins unlocked by this world
+      const newSkins=SKINS.filter(sk=>sk.worldUnlock&&sk.worldUnlock===worldsNow&&!s.owned.includes(sk.id));
+      newSkins.forEach(sk=>s.owned.push(sk.id));
+      if(newSkins.length>0){
+        G._worldBonusMsg=`🌍 World ${worldsNow} complete! Unlocked: ${newSkins.map(sk=>sk.name).join(', ')}!`;
+      } else {
+        G._worldBonusMsg=`🌍 World ${worldsNow} complete!`;
+      }
     }
   }
   if(G.isEndless){
@@ -2668,6 +2739,10 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
   const pc=platformColors[worldIdx]||platformColors[0];
   const difficulty=overrideDifficulty!==undefined?overrideDifficulty:Math.min(10,Math.floor((num-1)/5)*2+((num-1)%5)+1);
 
+  // Pick a layout mode — endless gets varied modes, story uses standard
+  const LAYOUT_MODES=['staircase','gauntlet','islands','cavern','zigzag','multilevel'];
+  const layoutMode=isEndless?LAYOUT_MODES[Math.floor(r()*LAYOUT_MODES.length)]:'standard';
+
   for(let c=6;c<LEVEL_COLS-7;c++){grid[LEVEL_ROWS-1][c].type=0;grid[LEVEL_ROWS-2][c].type=0;}
   for(let c=0;c<9;c++){grid[LEVEL_ROWS-1][c]={type:1,color:pc[0]};grid[LEVEL_ROWS-2][c]={type:1,color:pc[0]};}
   for(let c=LEVEL_COLS-9;c<LEVEL_COLS;c++){grid[LEVEL_ROWS-1][c]={type:1,color:pc[0]};grid[LEVEL_ROWS-2][c]={type:1,color:pc[0]};}
@@ -2680,184 +2755,302 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     for(let c=45;c<52;c++){grid[LEVEL_ROWS-1][c]={type:14,color:'#0077b6'};grid[LEVEL_ROWS-2][c]={type:14,color:'#0077b6'};}
   }
 
-  // --- BUG FIX: gap/rise caps tuned to player physics ---
-  // Player: vx=4, vy=-11.5, gravity=0.48. Max horizontal range per jump ≈ 9 tiles.
-  // With difficulty-based gap, keep hard cap at 4 so it's always clearable.
-  // Rise cap at 3 rows (4 rows requires a bounce pad, which we add explicitly).
-  const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));   // hard cap 4: always jumpable
-  const maxRiseY=Math.min(2,1+Math.floor(difficulty*0.15)); // hard cap 2: rise3 is physically impossible
-  const minPlatLen=Math.max(3,5-Math.floor(difficulty*0.3)); // slightly longer minimum platforms
-  const maxPlatLen=Math.max(4,7-Math.floor(difficulty*0.3));
-  const numPlatforms=10+difficulty*2;
+  const PLACE_LIMIT=LEVEL_COLS-12;
+  const coinChance=isEndless?0.30:(0.80-difficulty*0.02);
 
-  // --- BUG FIX: cx layout uses a cursor that respects LEVEL_COLS properly ---
-  // The old code clamped cx to LEVEL_COLS-12=68 then kept adding more platforms
-  // on top of each other. Now we track cx as a true running position, and stop
-  // placing platforms once we've passed the safe zone (column 68).
-  // The end platform starts at LEVEL_COLS-9=71, so we stop at 65 to leave room.
-  const PLACE_LIMIT=LEVEL_COLS-12; // col 68 — don't start a platform past here
-  let cx=9,cy=LEVEL_ROWS-3;
-  let prevWasMoving=false; // track so we don't put big gaps after moving platforms
-
-  // Key + door
-  let hasKeyDoor=worldIdx>=3&&num%3===0;
-  let keyPlaced=false,doorPlaced=false;
-
-  for(let i=0;i<numPlatforms;i++){
-    // Draw random values unconditionally so RNG stays consistent
-    const lenRoll=r();
-    const dxRoll=r();
-    const dyRoll=r();
-
-    // --- BUG FIX: compute advance before clamping, stop loop if we've filled the level ---
-    const dx=2+Math.floor(dxRoll*(maxGapX-1));
-
-    // If the next platform would start past the safe zone, stop generating
-    // (filler bridge logic below will connect to the end)
-    const nextCX=cx+dx;
-    if(nextCX>=PLACE_LIMIT) break;
-    cx=nextCX;
-
-    const rawDy=Math.floor(dyRoll*(maxRiseY*2+1))-maxRiseY;
-    const dy=Math.max(-maxRiseY,Math.min(maxRiseY,rawDy));
-    cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy));
-
-    const len=minPlatLen+Math.floor(lenRoll*(maxPlatLen-minPlatLen+1));
-    // Clamp length so platform doesn't poke into end zone
-    const safeLen=Math.min(len, PLACE_LIMIT-cx);
-    if(safeLen<2){cx+=safeLen;continue;} // too tight, skip
-
-    // Tile type for platform (ice worlds get slippery tiles)
-    let platType=1;
-    if(worldIdx===2&&r()<0.5)platType=9;
-    else if(worldIdx===6&&r()<0.3)platType=9;
-    else r(); // consume RNG for worlds that don't use platType variant
-
-    // Moving platforms — low probability, no consecutive moving, only small gaps
-    const wantMoving=worldIdx>=3&&r()<0.15&&safeLen>=3&&!prevWasMoving&&dx<=3;
-    if(wantMoving){
-      grid[cy][cx]={type:16,color:pc[0]};
-      prevWasMoving=true;
-    } else {
-      for(let j=0;j<safeLen;j++){
-        grid[cy][cx+j]={type:platType,color:pc[Math.floor(r()*pc.length)]};
-      }
-      prevWasMoving=false;
+  // Helper: fill the floor gaps with hazards
+  function fillFloor(){
+    for(let c=9;c<LEVEL_COLS-9;c++){
+      if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0)
+        grid[LEVEL_ROWS-1][c]=worldIdx===5?{type:7,color:'#e63946'}:{type:2,color:'#aaa'};
     }
+  }
 
-    // One-way platform overlay — only on solid (not moving) platforms, world 2+
-    const isOneWayPlat=!wantMoving&&worldIdx>=1&&r()<0.18&&safeLen>=3&&cx+2<PLACE_LIMIT;
-    if(isOneWayPlat){
-      for(let j=0;j<safeLen;j++) if(cx+j<PLACE_LIMIT) grid[cy][cx+j]={type:15,color:pc[0]};
-    } else if(worldIdx>=1) r(); // consume RNG
+  // Helper: bridge from (cx,cy) to the end platform so player can always reach the goal
+  function bridgeToEnd(cx,cy){
+    const endStart=LEVEL_COLS-9;
+    const endRow=LEVEL_ROWS-3;
+    if(endStart-cx>4){
+      const gap=endStart-cx;
+      const steps=Math.min(4,Math.floor(gap/5));
+      for(let s=1;s<=steps;s++){
+        const bx=Math.floor(cx+gap*(s/(steps+1)));
+        const targetRow=Math.round(cy+(endRow-cy)*(s/(steps+1)));
+        const br=Math.max(4,Math.min(LEVEL_ROWS-4,targetRow));
+        for(let j=0;j<4;j++) if(bx+j<endStart) grid[br][bx+j]={type:1,color:pc[0]};
+        // Bounce pad on bridge steps if they rise a lot
+        if(br<cy-2) grid[br][bx]={type:6,color:'#3a86ff'};
+      }
+    }
+  }
 
-    // Coins above platform (skip if one-way — visual clutter and hard to collect)
-    // Endless mode: fewer coins (more rewarding when you find them)
-    const coinChance = isEndless ? 0.30 : (0.80-difficulty*0.02);
+  // Helper: place hazard tiles (enemies/spikes) on a platform at (px,py,plen)
+  function decoratePlatform(px,py,plen,wantMoving,isOneWayPlat){
+    const safeEnemy=px+1<PLACE_LIMIT&&!wantMoving&&!isOneWayPlat;
+    // Coins
     if(!isOneWayPlat&&r()<coinChance){
-      for(let j=0;j<safeLen;j++){
-        if(r()<0.5&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
-      }
+      for(let j=0;j<plen;j++) if(r()<0.5&&py-1>=0&&px+j<PLACE_LIMIT) grid[py-1][px+j]={type:3,color:'#ffbe0b'};
     } else if(!isOneWayPlat) r();
-
-    // Power-ups (rare, float above platform)
-    if(r()<0.10&&cy-1>=0&&cx+Math.floor(safeLen/2)<PLACE_LIMIT){
-      const puRoll=r();
-      const pu=puRoll<0.45?21:puRoll<0.75?22:23;
-      grid[cy-1][cx+Math.floor(safeLen/2)]={type:pu,color:TILE_COLORS[pu]};
+    // Power-up
+    if(r()<0.10&&py-1>=0&&px+Math.floor(plen/2)<PLACE_LIMIT){
+      const puRoll=r();const pu=puRoll<0.45?21:puRoll<0.75?22:23;
+      grid[py-1][px+Math.floor(plen/2)]={type:pu,color:TILE_COLORS[pu]};
     }
-
-    // Checkpoint at mid-level (placed on solid surface tile, not on enemy/coin row)
-    if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&safeLen>=3&&!wantMoving&&!isOneWayPlat){
-      grid[cy][cx+Math.floor(safeLen/2)]={type:13,color:'#ffd60a'};
-    }
-
-    // Teleporters (world 4+, only when enough room remains for the pair)
-    if(worldIdx>=3&&!hasKeyDoor&&r()<0.10&&cx+safeLen+8<PLACE_LIMIT-4){
-      if(cy-1>=0) grid[cy-1][cx]={type:17,color:'#c77dff'};
-      const pairC=cx+safeLen+4;
-      if(cy-1>=0&&pairC<PLACE_LIMIT) grid[cy-1][pairC]={type:18,color:'#7b2d8b'};
-    } else if(worldIdx>=3) r();
-
-    // Key + Door
-    if(hasKeyDoor&&!keyPlaced&&i===Math.floor(numPlatforms*0.3)&&cy-1>=0&&cx+1<PLACE_LIMIT){
-      grid[cy-1][cx+1]={type:19,color:'#ffd60a'};
-      keyPlaced=true;
-    }
-    if(hasKeyDoor&&!doorPlaced&&keyPlaced&&i===Math.floor(numPlatforms*0.7)&&cy-1>=0&&cx<PLACE_LIMIT){
-      grid[cy-1][cx]={type:20,color:'#adb5bd'};
-      doorPlaced=true;
-    }
-
-    // Enemies — never on moving or one-way platforms (they'd fall off immediately)
-    const safeEnemy=cx+1<PLACE_LIMIT&&!wantMoving&&!isOneWayPlat;
-    if(difficulty>=2&&r()<0.22&&safeLen>=3&&safeEnemy) grid[cy-1][cx+1]={type:4,color:pc[0]};
-    if(worldIdx>=4&&r()<0.15&&safeLen>=4&&safeEnemy&&cy-2>=0) grid[cy-2][cx+1]={type:11,color:pc[0]};
-    if(worldIdx>=4&&r()<0.12&&safeEnemy) grid[cy-1][cx+Math.floor(safeLen/2)]={type:24,color:'#6d6875'};
-    if(worldIdx>=1&&r()<0.10&&safeLen>=3&&safeEnemy) grid[cy-1][cx]={type:25,color:'#4d908e'};
-
-    // Spikes — only on solid platforms, only in middle (never on first/last tile so player can land)
-    if(!wantMoving&&!isOneWayPlat&&difficulty>=4&&r()<0.18&&safeLen>=5){
-      const sp=2+Math.floor(r()*(safeLen-4)); // keep edges clear
-      if(cx+sp<PLACE_LIMIT) grid[cy][cx+sp]={type:2,color:'#ccc'};
+    // Enemies
+    if(difficulty>=2&&r()<0.25&&plen>=3&&safeEnemy) grid[py-1][px+1]={type:4,color:pc[0]};
+    if(worldIdx>=4&&r()<0.15&&plen>=4&&safeEnemy&&py-2>=0) grid[py-2][px+1]={type:11,color:pc[0]};
+    if(worldIdx>=4&&r()<0.14&&safeEnemy) grid[py-1][px+Math.floor(plen/2)]={type:24,color:'#6d6875'};
+    if(worldIdx>=1&&r()<0.12&&plen>=3&&safeEnemy) grid[py-1][px]={type:25,color:'#4d908e'};
+    // Spike
+    if(!wantMoving&&!isOneWayPlat&&difficulty>=4&&r()<0.20&&plen>=5){
+      const sp=2+Math.floor(r()*(plen-4));if(px+sp<PLACE_LIMIT) grid[py][px+sp]={type:2,color:'#ccc'};
     } else if(difficulty>=4) r();
-
-    // Lava gaps in floor between platforms
-    if(worldIdx>=1&&r()<0.22&&cx>12){
-      for(let lc=cx-2;lc<cx&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
-    }
-
-    // Bounce pad — placed LAST so nothing overwrites it; only on solid platforms
-    // Required when rise is maximum (player needs extra height)
-    const needsBounce=dy<=-maxRiseY;
-    if(!wantMoving&&!isOneWayPlat&&worldIdx>=2&&(needsBounce||r()<0.20)&&cx<PLACE_LIMIT-2){
-      grid[cy][cx]={type:6,color:'#3a86ff'};
-    } else if(worldIdx>=2) r();
-
-    // Arrow block — world 3+, placed LAST on first tile
-    if(!wantMoving&&!isOneWayPlat&&worldIdx>=3&&r()<0.15&&safeLen>=2&&cx<PLACE_LIMIT-1){
-      grid[cy][cx]={type:8,color:'#fb5607'};
-    }
-
-    // Dropper (hangs from ceiling)
-    if(worldIdx>=4&&r()<0.18&&cx+2<PLACE_LIMIT){
-      const dr=Math.max(0,cy-4);
-      grid[dr][cx+Math.floor(safeLen/2)]={type:10,color:'#ff006e'};
-    }
-
-    // Cannon — world 6+, placed on platform surface
-    if(!wantMoving&&worldIdx>=5&&r()<0.18&&cx+3<PLACE_LIMIT&&safeLen>=3){
-      grid[cy-1][cx+Math.floor(safeLen/2)]={type:12,color:'#06d6a0'};
-    }
-
-    cx=cx+safeLen;
-  }
-
-  // Death floor — spikes or lava in gaps between platforms
-  for(let c=9;c<LEVEL_COLS-9;c++){
-    if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0){
-      grid[LEVEL_ROWS-1][c]=worldIdx===5?{type:7,color:'#e63946'}:{type:2,color:'#aaa'};
+    // Cannon
+    if(!wantMoving&&worldIdx>=5&&r()<0.20&&px+3<PLACE_LIMIT&&plen>=3)
+      grid[py-1][px+Math.floor(plen/2)]={type:12,color:'#06d6a0'};
+    // Dropper
+    if(worldIdx>=4&&r()<0.18&&px+2<PLACE_LIMIT){
+      const dr=Math.max(0,py-4);grid[dr][px+Math.floor(plen/2)]={type:10,color:'#ff006e'};
     }
   }
 
-  // Filler bridge: connect last platform to end zone with stepping platforms
-  // Each stepping platform is at most 2 rows below the previous one
-  const endStart=LEVEL_COLS-9;
-  const endRow=LEVEL_ROWS-3; // height of the end platform
-  if(endStart-cx>4){
-    const totalGap=endStart-cx;
-    // Place up to 3 bridge platforms spaced evenly
-    const steps=Math.min(3,Math.floor(totalGap/5));
-    for(let s=1;s<=steps;s++){
-      const bx=cx+Math.floor(totalGap*(s/(steps+1)));
-      // Interpolate height from cy down toward endRow, max 2 rows per step
-      const targetRow=cy+Math.round((endRow-cy)*(s/(steps+1)));
-      const br=Math.max(4,Math.min(LEVEL_ROWS-4,targetRow));
-      if(bx+3<endStart) for(let j=0;j<4;j++) if(bx+j<endStart) grid[br][bx+j]={type:1,color:pc[0]};
+  // ===================== LAYOUT MODES =====================
+  // Helper: fill all empty death-floor cells with spikes or lava
+  function fillDeathFloor(){
+    for(let c=9;c<LEVEL_COLS-9;c++){
+      if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0)
+        grid[LEVEL_ROWS-1][c]=worldIdx===5?{type:7,color:'#e63946'}:{type:2,color:'#aaa'};
     }
   }
 
-  return{name:`Level ${num}`,grid};
+  if(layoutMode==='staircase'){
+    // Continuous staircase with multiple tiers — ascending & descending runs across full level
+    let cx=9, tierIdx=0, dir=1, cy=LEVEL_ROWS-4;
+    const tierH=[LEVEL_ROWS-4, LEVEL_ROWS-7, LEVEL_ROWS-10, LEVEL_ROWS-13];
+    while(cx<PLACE_LIMIT-4){
+      const plen=Math.max(3,Math.min(4+Math.floor(r()*4), PLACE_LIMIT-cx-2));
+      cy=Math.max(4,Math.min(LEVEL_ROWS-4,tierH[tierIdx%4]));
+      for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      // Sub-platform creates layered feel
+      if(r()<0.4&&cy+3<LEVEL_ROWS-2){const sub=Math.max(2,plen-1);for(let j=0;j<sub;j++) grid[cy+3][cx+j]={type:1,color:pc[0]};}
+      if(dir>0) grid[cy][cx]={type:6,color:'#3a86ff'};
+      else if(worldIdx>=3&&r()<0.3) grid[cy][cx]={type:8,color:'#fb5607'};
+      decoratePlatform(cx,cy,plen,false,false);
+      if(worldIdx>=1) for(let lc=cx+plen;lc<cx+plen+1+Math.floor(r()*2)&&lc<PLACE_LIMIT;lc++)
+        grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
+      cx+=plen+1+Math.floor(r()*2);
+      tierIdx+=dir; if(tierIdx>=3){dir=-1;}else if(tierIdx<=0){dir=1;}
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else if(layoutMode==='gauntlet'){
+    // Dense obstacle course — long hazard-packed platforms separated by 1-2 tile gaps
+    let cx=9, cy=LEVEL_ROWS-4;
+    while(cx<PLACE_LIMIT-4){
+      const plen=Math.min(10+Math.floor(r()*8), PLACE_LIMIT-cx-2);
+      const dy=Math.floor(r()*6)-3; cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy));
+      for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      for(let j=1;j<plen-1;j+=3){
+        const roll=r();
+        if(roll<0.25)      grid[cy][cx+j]={type:2,color:'#ccc'};
+        else if(roll<0.45) grid[cy-1][cx+j]={type:4,color:pc[0]};
+        else if(roll<0.55) grid[cy-1][cx+j]={type:24,color:'#6d6875'};
+      }
+      if(worldIdx>=5&&plen>=6) grid[cy-1][cx+Math.floor(plen/2)]={type:12,color:'#06d6a0'};
+      if(r()<0.35&&cy-1>=0) grid[cy-1][cx+plen-2]={type:23,color:TILE_COLORS[23]};
+      if(r()<coinChance) for(let j=0;j<plen;j++) if(r()<0.3&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
+      if(worldIdx>=4&&cy-4>=0) for(let j=2;j<plen-2;j+=5) if(r()<0.4) grid[cy-4][cx+j]={type:10,color:'#ff006e'};
+      const gap=1+Math.floor(r()*2);
+      for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
+      cx+=plen+gap;
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else if(layoutMode==='islands'){
+    // Three height tiers with floating islands — wide gaps, bounce pads everywhere
+    const tiers=[LEVEL_ROWS-4, LEVEL_ROWS-8, LEVEL_ROWS-12];
+    let cx=9, tierIdx=0, cy=tiers[0];
+    while(cx<PLACE_LIMIT-4){
+      cy=tiers[tierIdx%3];
+      const plen=Math.max(3,Math.min(5+Math.floor(r()*4), PLACE_LIMIT-cx-2));
+      for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      grid[cy][cx]={type:6,color:'#3a86ff'}; // every island has a bounce pad
+      if(r()<0.4&&cy+4<LEVEL_ROWS-2) for(let j=0;j<plen;j++) grid[cy+4][cx+j]={type:15,color:pc[0]};
+      decoratePlatform(cx,cy,plen,false,false);
+      const gap=3+Math.floor(r()*3);
+      for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
+      cx+=plen+gap; tierIdx++;
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else if(layoutMode==='cavern'){
+    // Enclosed cave — ceiling blocks narrow passages, multiple floor levels
+    let cx=9, cy=LEVEL_ROWS-4;
+    while(cx<PLACE_LIMIT-4){
+      const plen=Math.max(4,Math.min(7+Math.floor(r()*6), PLACE_LIMIT-cx-2));
+      const dy=Math.floor(r()*5)-2; cy=Math.max(5,Math.min(LEVEL_ROWS-5,cy+dy));
+      for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      const ceilRow=Math.max(1,cy-6);
+      for(let j=0;j<plen;j++) if(r()<0.55) grid[ceilRow][cx+j]={type:1,color:pc[0]};
+      for(let j=1;j<plen-1;j++) if(r()<0.30) grid[ceilRow+1][cx+j]={type:2,color:'#888'};
+      if(worldIdx>=3&&r()<0.4) grid[Math.max(1,cy-3)][cx+Math.floor(plen/2)]={type:10,color:'#ff006e'};
+      if(r()<0.5&&cy-3>=1){const mid=Math.max(2,plen-2);for(let j=1;j<mid;j++) grid[cy-3][cx+j]={type:15,color:pc[0]};}
+      if(worldIdx>=2&&r()<0.5) grid[cy-1][cx+1]={type:24,color:'#6d6875'};
+      decoratePlatform(cx,cy,plen,false,false);
+      cx+=plen+1+Math.floor(r()*2);
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else if(layoutMode==='zigzag'){
+    // Strict high-low alternation — consistent big height changes, teleporters as shortcuts
+    let cx=9, cy=LEVEL_ROWS-5;
+    const rows=[LEVEL_ROWS-12, LEVEL_ROWS-5];
+    let hi=Math.floor(r()*2);
+    while(cx<PLACE_LIMIT-4){
+      cy=Math.max(4,rows[hi%2]);
+      const plen=Math.max(4,Math.min(7+Math.floor(r()*4), PLACE_LIMIT-cx-2));
+      for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+      if(hi%2===0) grid[cy][cx]={type:6,color:'#3a86ff'};
+      if(worldIdx>=3&&r()<0.3&&cx+plen+4<PLACE_LIMIT){
+        if(cy-1>=0) grid[cy-1][cx+Math.floor(plen/2)]={type:17,color:'#c77dff'};
+        const pairC=cx+plen+3,pairRow=Math.max(4,rows[(hi+1)%2]);
+        if(pairRow-1>=0&&pairC<PLACE_LIMIT) grid[pairRow-1][pairC]={type:18,color:'#7b2d8b'};
+      }
+      if(r()<coinChance){
+        const midX=cx+plen+2, midY=Math.floor((rows[0]+rows[1])/2);
+        if(midX<PLACE_LIMIT&&midY>=1) grid[midY][midX]={type:3,color:'#ffbe0b'};
+      }
+      decoratePlatform(cx,cy,plen,false,false);
+      const gap=2+Math.floor(r()*3);
+      for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
+      cx+=plen+gap; hi++;
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else if(layoutMode==='multilevel'){
+    // Rich multi-tier: 3-4 stacked platform rows interconnected by bounce pads & one-ways
+    let cx=9, cy=LEVEL_ROWS-4;
+    const numTiers=3+Math.floor(r()*2);
+    const tierRows=[];
+    for(let t=0;t<numTiers;t++) tierRows.push(Math.max(4,LEVEL_ROWS-4-t*4));
+    while(cx<PLACE_LIMIT-4){
+      const segLen=Math.max(4,Math.min(6+Math.floor(r()*5), PLACE_LIMIT-cx-2));
+      const tiersHere=1+Math.floor(r()*Math.min(3,numTiers));
+      for(let t=0;t<tiersHere;t++){
+        cy=tierRows[t];
+        const offset=Math.floor(r()*3);
+        const plen=Math.max(3,segLen-offset-Math.floor(r()*2));
+        if(cx+offset+plen>PLACE_LIMIT) continue;
+        for(let j=0;j<plen;j++) grid[cy][cx+offset+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
+        if(t===0) grid[cy][cx+offset]={type:6,color:'#3a86ff'};
+        else if(t===1&&r()<0.6) for(let j=0;j<plen;j++) grid[cy][cx+offset+j]={type:15,color:pc[0]};
+        decoratePlatform(cx+offset,cy,plen,false,t>0);
+      }
+      const gap=1+Math.floor(r()*2);
+      cx+=segLen+gap;
+    }
+    bridgeToEnd(cx,cy);
+    fillDeathFloor();
+
+  } else {
+    // === STANDARD (used for story mode) ===
+    const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));
+    const maxRiseY=Math.min(2,1+Math.floor(difficulty*0.15));
+    const minPlatLen=Math.max(3,5-Math.floor(difficulty*0.3));
+    const maxPlatLen=Math.max(4,7-Math.floor(difficulty*0.3));
+    const numPlatforms=10+difficulty*2;
+    let cx=9,cy=LEVEL_ROWS-3;
+    let prevWasMoving=false;
+    let hasKeyDoor=worldIdx>=3&&num%3===0;
+    let keyPlaced=false,doorPlaced=false;
+
+    for(let i=0;i<numPlatforms;i++){
+      const lenRoll=r();const dxRoll=r();const dyRoll=r();
+      const dx=2+Math.floor(dxRoll*(maxGapX-1));
+      const nextCX=cx+dx; if(nextCX>=PLACE_LIMIT) break;
+      cx=nextCX;
+      const rawDy=Math.floor(dyRoll*(maxRiseY*2+1))-maxRiseY;
+      const dy=Math.max(-maxRiseY,Math.min(maxRiseY,rawDy));
+      cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy));
+      const len=minPlatLen+Math.floor(lenRoll*(maxPlatLen-minPlatLen+1));
+      const safeLen=Math.min(len, PLACE_LIMIT-cx);
+      if(safeLen<2){cx+=safeLen;continue;}
+
+      let platType=1;
+      if(worldIdx===2&&r()<0.5)platType=9;
+      else if(worldIdx===6&&r()<0.3)platType=9;
+      else r();
+
+      const wantMoving=worldIdx>=3&&r()<0.15&&safeLen>=3&&!prevWasMoving&&dx<=3;
+      if(wantMoving){grid[cy][cx]={type:16,color:pc[0]};prevWasMoving=true;}
+      else{for(let j=0;j<safeLen;j++) grid[cy][cx+j]={type:platType,color:pc[Math.floor(r()*pc.length)]};prevWasMoving=false;}
+
+      const isOneWayPlat=!wantMoving&&worldIdx>=1&&r()<0.18&&safeLen>=3&&cx+2<PLACE_LIMIT;
+      if(isOneWayPlat){for(let j=0;j<safeLen;j++) if(cx+j<PLACE_LIMIT) grid[cy][cx+j]={type:15,color:pc[0]};}
+      else if(worldIdx>=1) r();
+
+      if(!isOneWayPlat&&r()<coinChance){
+        for(let j=0;j<safeLen;j++) if(r()<0.5&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
+      } else if(!isOneWayPlat) r();
+
+      if(r()<0.10&&cy-1>=0&&cx+Math.floor(safeLen/2)<PLACE_LIMIT){
+        const puRoll=r();const pu=puRoll<0.45?21:puRoll<0.75?22:23;
+        grid[cy-1][cx+Math.floor(safeLen/2)]={type:pu,color:TILE_COLORS[pu]};
+      }
+      if(difficulty>=5&&i===Math.floor(numPlatforms/2)&&safeLen>=3&&!wantMoving&&!isOneWayPlat)
+        grid[cy][cx+Math.floor(safeLen/2)]={type:13,color:'#ffd60a'};
+
+      if(worldIdx>=3&&!hasKeyDoor&&r()<0.10&&cx+safeLen+8<PLACE_LIMIT-4){
+        if(cy-1>=0) grid[cy-1][cx]={type:17,color:'#c77dff'};
+        const pairC=cx+safeLen+4;
+        if(cy-1>=0&&pairC<PLACE_LIMIT) grid[cy-1][pairC]={type:18,color:'#7b2d8b'};
+      } else if(worldIdx>=3) r();
+
+      if(hasKeyDoor&&!keyPlaced&&i===Math.floor(numPlatforms*0.3)&&cy-1>=0&&cx+1<PLACE_LIMIT){grid[cy-1][cx+1]={type:19,color:'#ffd60a'};keyPlaced=true;}
+      if(hasKeyDoor&&!doorPlaced&&keyPlaced&&i===Math.floor(numPlatforms*0.7)&&cy-1>=0&&cx<PLACE_LIMIT){grid[cy-1][cx]={type:20,color:'#adb5bd'};doorPlaced=true;}
+
+      const safeEnemy=cx+1<PLACE_LIMIT&&!wantMoving&&!isOneWayPlat;
+      if(difficulty>=2&&r()<0.22&&safeLen>=3&&safeEnemy) grid[cy-1][cx+1]={type:4,color:pc[0]};
+      if(worldIdx>=4&&r()<0.15&&safeLen>=4&&safeEnemy&&cy-2>=0) grid[cy-2][cx+1]={type:11,color:pc[0]};
+      if(worldIdx>=4&&r()<0.12&&safeEnemy) grid[cy-1][cx+Math.floor(safeLen/2)]={type:24,color:'#6d6875'};
+      if(worldIdx>=1&&r()<0.10&&safeLen>=3&&safeEnemy) grid[cy-1][cx]={type:25,color:'#4d908e'};
+
+      if(!wantMoving&&!isOneWayPlat&&difficulty>=4&&r()<0.18&&safeLen>=5){
+        const sp=2+Math.floor(r()*(safeLen-4));if(cx+sp<PLACE_LIMIT) grid[cy][cx+sp]={type:2,color:'#ccc'};
+      } else if(difficulty>=4) r();
+
+      if(worldIdx>=1&&r()<0.22&&cx>12) for(let lc=cx-2;lc<cx&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
+
+      const needsBounce=dy<=-maxRiseY;
+      if(!wantMoving&&!isOneWayPlat&&worldIdx>=2&&(needsBounce||r()<0.20)&&cx<PLACE_LIMIT-2) grid[cy][cx]={type:6,color:'#3a86ff'};
+      else if(worldIdx>=2) r();
+
+      if(!wantMoving&&!isOneWayPlat&&worldIdx>=3&&r()<0.15&&safeLen>=2&&cx<PLACE_LIMIT-1) grid[cy][cx]={type:8,color:'#fb5607'};
+      if(worldIdx>=4&&r()<0.18&&cx+2<PLACE_LIMIT){const dr=Math.max(0,cy-4);grid[dr][cx+Math.floor(safeLen/2)]={type:10,color:'#ff006e'};}
+      if(!wantMoving&&worldIdx>=5&&r()<0.18&&cx+3<PLACE_LIMIT&&safeLen>=3) grid[cy-1][cx+Math.floor(safeLen/2)]={type:12,color:'#06d6a0'};
+
+      cx=cx+safeLen;
+    }
+
+    // Filler bridge for standard mode
+    const endStart2=LEVEL_COLS-9, endRow2=LEVEL_ROWS-3;
+    if(endStart2-cx>4){
+      const totalGap2=endStart2-cx, steps2=Math.min(3,Math.floor(totalGap2/5));
+      for(let s=1;s<=steps2;s++){
+        const bx=cx+Math.floor(totalGap2*(s/(steps2+1)));
+        const br=Math.max(4,Math.min(LEVEL_ROWS-4,cy+Math.round((endRow2-cy)*(s/(steps2+1)))));
+        if(bx+3<endStart2) for(let j=0;j<4;j++) if(bx+j<endStart2) grid[br][bx+j]={type:1,color:pc[0]};
+      }
+    }
+    fillDeathFloor();
+  }
+
+  return{name:`Level ${num}`,grid,layoutMode};
 }
 
 // =============================================
