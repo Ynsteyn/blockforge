@@ -191,8 +191,32 @@ canvas{display:block;}
 @keyframes puPop{0%{transform:scale(0) rotate(-10deg);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
 .fadeIn{animation:fadeIn .3s ease forwards;}
 
-/* ===== TOUCH CONTROLS ===== */
-#touch-controls{
+/* ===== DAILY CHALLENGE ===== */
+#screen-daily{background:radial-gradient(ellipse at 50% 30%,#1a0030,#0a0a1a);flex-direction:column;padding-top:60px;}
+.daily-inner{width:100%;max-width:700px;overflow-y:auto;max-height:calc(100vh-80px);padding:24px;display:flex;flex-direction:column;gap:20px;}
+.daily-header-card{background:rgba(255,190,11,0.08);border:3px solid var(--yellow);padding:22px;text-align:center;}
+.daily-title{font-family:'Boogaloo',cursive;font-size:36px;color:var(--yellow);text-shadow:2px 2px 0 #e85d04;margin-bottom:4px;}
+.daily-subtitle{font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:2px;}
+.daily-date{font-family:'Boogaloo',cursive;font-size:18px;color:var(--orange);margin-top:6px;}
+.daily-play-btn{font-family:'Boogaloo',cursive;font-size:24px;padding:14px 40px;background:var(--yellow);color:var(--ink);border:4px solid var(--ink);cursor:pointer;margin-top:10px;box-shadow:4px 4px 0 rgba(0,0,0,0.5);transition:transform .1s,box-shadow .1s;}
+.daily-play-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 rgba(0,0,0,0.5);}
+.daily-played-msg{font-family:'Boogaloo',cursive;font-size:20px;color:#06d6a0;margin-top:10px;}
+.daily-score-display{font-family:'Boogaloo',cursive;font-size:28px;color:var(--yellow);}
+.daily-lb-section{background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.1);padding:20px;}
+.daily-lb-title{font-family:'Boogaloo',cursive;font-size:22px;color:var(--yellow);margin-bottom:14px;}
+.daily-lb-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.07);}
+.daily-lb-rank{font-family:'Boogaloo',cursive;font-size:22px;width:32px;text-align:center;color:rgba(255,255,255,0.4);}
+.daily-lb-name{font-family:'Boogaloo',cursive;font-size:18px;color:#fff;flex:1;}
+.daily-lb-score{font-family:'Boogaloo',cursive;font-size:18px;color:var(--yellow);}
+.daily-you{background:rgba(255,190,11,0.08)!important;border-radius:4px;}
+/* Boss HP bar */
+#boss-hp-bar{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:60%;max-width:400px;z-index:15;display:none;flex-direction:column;align-items:center;gap:3px;}
+#boss-hp-bar .boss-name{font-family:'Boogaloo',cursive;font-size:16px;color:#ff4500;text-shadow:0 0 8px #ff4500;letter-spacing:2px;}
+#boss-hp-bar .boss-bar-bg{width:100%;height:18px;background:rgba(0,0,0,0.6);border:3px solid #ff4500;position:relative;}
+#boss-hp-bar .boss-bar-fill{height:100%;background:linear-gradient(90deg,#e63946,#ff4500);transition:width .2s;}
+/* Secret world glow */
+.world-secret-glow{border:2px solid #ff006e!important;box-shadow:0 0 16px rgba(255,0,110,0.4);}
+@keyframes secretPulse{0%,100%{box-shadow:0 0 12px rgba(255,0,110,0.3);}50%{box-shadow:0 0 28px rgba(255,0,110,0.7);}}
   position:absolute;bottom:0;left:0;right:0;
   display:none; /* shown only on touch devices */
   pointer-events:none;
@@ -267,6 +291,60 @@ canvas{display:block;}
 .admin-level-name{font-family:'Boogaloo',cursive;font-size:17px;color:#fff;flex:1;}
 .admin-level-meta{font-size:12px;color:rgba(255,255,255,0.4);}
 .admin-del-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:4px 14px;background:var(--red);color:#fff;border:none;cursor:pointer;}
+/* ===== COMMENTS ===== */
+.comm-comments-section{margin-top:10px;border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;}
+.comm-comment{display:flex;gap:10px;margin-bottom:8px;font-size:13px;}
+.comm-comment-author{color:var(--yellow);font-family:'Boogaloo',cursive;font-size:14px;flex-shrink:0;}
+.comm-comment-text{color:rgba(255,255,255,0.75);flex:1;}
+.comm-comment-time{color:rgba(255,255,255,0.25);font-size:11px;flex-shrink:0;}
+.comm-comment-form{display:flex;gap:8px;margin-top:8px;}
+.comm-comment-input{flex:1;font-family:'Boogaloo',cursive;font-size:14px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);color:#fff;padding:5px 10px;}
+.comm-comment-input::placeholder{color:rgba(255,255,255,0.25);}
+.comm-comment-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:5px 14px;background:var(--blue);color:#fff;border:none;cursor:pointer;}
+.comm-comments-toggle{font-family:'Boogaloo',cursive;font-size:13px;color:var(--blue);cursor:pointer;opacity:0.7;padding:3px 8px;border:1px solid rgba(255,255,255,0.1);background:none;}
+.comm-comments-toggle:hover{opacity:1;}
+/* ===== FOLLOW / FEED ===== */
+.follow-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:6px 16px;border:2px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;transition:all .12s;}
+.follow-btn.following{background:var(--blue);color:#fff;}
+.follow-btn:hover{background:var(--blue);color:#fff;}
+#screen-feed{background:#0d1f2d;flex-direction:column;padding-top:60px;}
+.feed-empty{color:rgba(255,255,255,0.3);text-align:center;margin-top:60px;font-size:16px;line-height:2;}
+/* ===== LEVEL OF THE WEEK ===== */
+.lotw-banner{background:linear-gradient(135deg,rgba(255,190,11,0.15),rgba(255,100,0,0.1));border:3px solid var(--yellow);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:8px;}
+.lotw-badge{font-family:'Boogaloo',cursive;font-size:14px;color:var(--yellow);background:rgba(255,190,11,0.15);padding:3px 10px;border:2px solid var(--yellow);flex-shrink:0;}
+.lotw-title{font-family:'Boogaloo',cursive;font-size:20px;color:#fff;}
+.lotw-meta{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px;}
+/* ===== HAT SHOP ===== */
+#screen-hats{background:#0a0a1a;flex-direction:column;padding-top:60px;}
+.hat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;padding:20px;max-width:900px;overflow-y:auto;max-height:calc(100vh - 80px);}
+.hat-card{background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .12s;cursor:pointer;}
+.hat-card:hover{border-color:var(--yellow);}
+.hat-preview{font-size:42px;height:56px;display:flex;align-items:center;justify-content:center;}
+.hat-name{font-family:'Boogaloo',cursive;font-size:16px;color:#fff;text-align:center;}
+.hat-price{font-family:'Boogaloo',cursive;font-size:14px;color:var(--yellow);}
+.hat-buy-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:5px 14px;border:2px solid var(--yellow);background:transparent;color:var(--yellow);cursor:pointer;width:100%;}
+.hat-buy-btn.owned{border-color:var(--green);color:var(--green);}
+.hat-buy-btn.equipped{background:var(--green);color:#fff;border-color:var(--green);}
+/* ===== COMMUNITY SEARCH / FILTER ===== */
+.comm-search-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+#comm-search-input{flex:1;font-family:'Boogaloo',cursive;font-size:15px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.15);color:#fff;padding:6px 12px;max-width:280px;}
+#comm-search-input::placeholder{color:rgba(255,255,255,0.25);}
+.comm-tag-btn{font-family:'Boogaloo',cursive;font-size:13px;padding:4px 12px;border:2px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;transition:all .12s;}
+.comm-tag-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+/* ===== UNDO/REDO ===== */
+.undo-btn{font-family:'Boogaloo',cursive;font-size:16px;padding:3px 10px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:#fff;cursor:pointer;height:28px;}
+.undo-btn:disabled{opacity:0.25;cursor:default;}
+/* ===== COIN TRAIL ===== */
+.trail-option{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .12s;}
+.trail-option.selected{border-color:var(--yellow);background:rgba(255,190,11,0.08);}
+/* ===== SECRET WORLDS ===== */
+@keyframes secretPulse{0%,100%{box-shadow:0 0 10px rgba(255,0,110,0.3);}50%{box-shadow:0 0 22px rgba(255,0,110,0.6);}}
+.world-secret-glow{border:2px solid rgba(255,0,110,0.4)!important;}
+/* ===== BOSS HEALTH BAR ===== */
+#boss-hp-bar{position:absolute;top:60px;left:50%;transform:translateX(-50%);width:280px;display:none;z-index:20;pointer-events:none;}
+.boss-name{font-family:'Boogaloo',cursive;font-size:16px;color:#ff4500;text-align:center;text-shadow:1px 1px 0 #000;margin-bottom:3px;}
+.boss-bar-bg{height:14px;background:rgba(0,0,0,0.6);border:2px solid rgba(255,69,0,0.6);}
+.boss-bar-fill{height:100%;background:linear-gradient(90deg,#e63946,#ff4500);transition:width .3s;}
 
 </style>
 </head>
@@ -304,6 +382,7 @@ canvas{display:block;}
       <button class="menu-btn" style="background:var(--orange);color:#fff;" onclick="showCommunity()">🌍 COMMUNITY</button>
       <button class="menu-btn" style="background:var(--pink);color:#fff;" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
       <button class="menu-btn" style="background:#06d6a0;color:#12121f;" onclick="startEndless()">♾ ENDLESS<span id="endless-best-badge" style="display:none;font-size:11px;opacity:0.8;display:block;margin-top:2px"></span></button>
+      <button class="menu-btn" style="background:#ffd700;color:#12121f;" onclick="showDaily()">📅 DAILY<span id="daily-status-badge" style="font-size:11px;opacity:0.8;display:block;margin-top:2px"></span></button>
       <button class="menu-btn" id="admin-menu-btn" style="background:#ff4500;color:#fff;display:none;" onclick="showAdmin()">👑 ADMIN</button>
     </div>
   </div>
@@ -335,6 +414,7 @@ canvas{display:block;}
     <button class="back-btn" onclick="showMenu()">← BACK</button>
     <span class="header-title">🛒 SKIN SHOP</span>
     <span class="header-coins">🪙 <span id="shop-coin-count">0</span></span>
+    <button style="font-family:'Boogaloo',cursive;font-size:15px;padding:5px 14px;border:2px solid var(--yellow);background:transparent;color:var(--yellow);cursor:pointer;margin-right:8px;" onclick="showHats()">🎩 HATS</button>
   </div>
   <div class="shop-inner"><div class="shop-grid" id="shop-grid"></div></div>
 </div>
@@ -352,7 +432,15 @@ canvas{display:block;}
       <button class="comm-sort-btn" id="sort-new" onclick="setCommunitySort('new')">🆕 Newest</button>
       <button class="comm-sort-btn" id="sort-rating" onclick="setCommunitySort('rating')">⭐ Top Rated</button>
       <button class="comm-sort-btn" id="sort-plays" onclick="setCommunitySort('plays')">▶ Most Played</button>
+      <button class="comm-sort-btn" id="sort-feed" onclick="setCommunitySort('feed')">💚 Following</button>
       <button class="comm-publish-btn" onclick="openPublishDialog()">📤 Publish Level</button>
+    </div>
+    <div class="comm-search-row">
+      <input id="comm-search-input" type="text" placeholder="Search levels or creators…" oninput="communitySearchDebounce()" maxlength="40">
+      <button class="comm-tag-btn" id="tag-all" onclick="setCommunityTag('')">All</button>
+      <button class="comm-tag-btn" id="tag-easy" onclick="setCommunityTag('easy')">Easy</button>
+      <button class="comm-tag-btn" id="tag-hard" onclick="setCommunityTag('hard')">Hard</button>
+      <button class="comm-tag-btn" id="tag-art" onclick="setCommunityTag('art')">Art</button>
     </div>
     <div id="community-list"><div class="comm-loading">Loading levels...</div></div>
   </div>
@@ -377,6 +465,18 @@ canvas{display:block;}
   </div>
 </div>
 
+<!-- DAILY CHALLENGE -->
+<div id="screen-daily" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showMenu()">← BACK</button>
+    <span class="header-title">📅 DAILY CHALLENGE</span>
+    <span class="header-coins">🪙 <span id="daily-coin-count">0</span></span>
+  </div>
+  <div class="daily-inner" id="daily-inner">
+    <div class="comm-loading">Loading...</div>
+  </div>
+</div>
+
 <!-- PROFILE -->
 <div id="screen-profile" class="screen">
   <div class="screen-header">
@@ -397,6 +497,8 @@ canvas{display:block;}
     <button class="tb-btn tb-mode" id="mode-toggle-btn" onclick="toggleGameMode()">▶ PLAY</button>
     <button class="tb-btn tb-save" id="save-btn" onclick="openSaveDialog()">💾 SAVE</button>
     <button class="tb-btn tb-clear" id="tb-clear" onclick="clearLevel()">🗑 CLEAR</button>
+    <button class="undo-btn" id="tb-undo" onclick="undoEdit()" title="Undo (Ctrl+Z)" disabled>↩</button>
+    <button class="undo-btn" id="tb-redo" onclick="redoEdit()" title="Redo (Ctrl+Y)" disabled>↪</button>
     <div class="tb-sep"></div>
     <div id="palette-row"><span style="font-size:11px;color:rgba(255,255,255,0.5);flex-shrink:0">COLOR:</span></div>
     <select id="tile-type-sel">
@@ -439,6 +541,10 @@ canvas{display:block;}
   <div id="game-area">
     <canvas id="gameCanvas"></canvas>
     <div id="powerup-hud"></div>
+    <div id="boss-hp-bar">
+      <div class="boss-name" id="boss-name-label">👑 KING BOSS</div>
+      <div class="boss-bar-bg"><div class="boss-bar-fill" id="boss-bar-fill" style="width:100%"></div></div>
+    </div>
     <!-- Touch controls (shown on mobile/tablet) -->
     <div id="touch-controls">
       <div class="touch-dpad">
@@ -463,7 +569,17 @@ canvas{display:block;}
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
+<!-- HAT SHOP -->
+<div id="screen-hats" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showShop()">← BACK</button>
+    <span class="header-title">🎩 HAT SHOP</span>
+    <span class="header-coins">🪙 <span id="hats-coin-count">0</span></span>
+  </div>
+  <div class="hat-grid" id="hat-grid"></div>
+</div>
+
+<!-- FOLLOW FEED (handled inside community tab via sort=feed) -->
 <div id="screen-admin" class="screen">
   <div class="screen-header">
     <button class="back-btn" onclick="showMenu()">← BACK</button>
@@ -550,7 +666,7 @@ const SKINS=[
 ];
 
 // =============================================
-// WORLDS (50 levels)
+// WORLDS (50 + 15 secret levels)
 // =============================================
 const WORLDS=[
   {name:'World 1 — Grasslands',     color:'#52b788', levels:[
@@ -573,6 +689,13 @@ const WORLDS=[
     {num:41,name:'Dark Portal',diff:9},{num:42,name:'Shadow Maze',diff:9},{num:43,name:'Void Walker',diff:9},{num:44,name:'Nightmare Run',diff:10},{num:45,name:'Soul Eater',diff:10}]},
   {name:'World 10 — The Endgame',   color:'#ffbe0b', levels:[
     {num:46,name:'Gates of Hell',diff:10},{num:47,name:'Gauntlet',diff:10},{num:48,name:'No Mercy',diff:10},{num:49,name:'The Last Run',diff:10},{num:50,name:'BLOCKFORGE MASTER',diff:10}]},
+  // SECRET WORLDS — unlock after beating all 50 levels
+  {name:'🔓 World 11 — The Abyss',  color:'#ff006e', secret:true, levels:[
+    {num:51,name:'Into the Void',diff:11},{num:52,name:'Dark Matter',diff:11},{num:53,name:'Event Horizon',diff:12},{num:54,name:'Singularity',diff:12},{num:55,name:'Abyss Boss',diff:12,boss:true}]},
+  {name:'🔓 World 12 — Nightmare',  color:'#8000ff', secret:true, levels:[
+    {num:56,name:'Bad Dream',diff:12},{num:57,name:'Terror Run',diff:13},{num:58,name:'Demon Halls',diff:13},{num:59,name:'The Cursed',diff:13},{num:60,name:'Nightmare King',diff:13,boss:true}]},
+  {name:'🔓 World 13 — FINAL',      color:'#ff0000', secret:true, levels:[
+    {num:61,name:'Chaos Theory',diff:14},{num:62,name:'Oblivion',diff:14},{num:63,name:'Armageddon',diff:14},{num:64,name:'The True End',diff:15},{num:65,name:'👑 BLOCKFORGE GOD',diff:15,boss:true}]},
 ];
 
 // =============================================
@@ -583,7 +706,7 @@ function showScreen(id){
   document.getElementById('screen-'+id).classList.add('active');
 }
 function showMenu(){
-  stopGame(); showScreen('menu'); updateCoinDisplays(); updateMenuUserBadge();
+  stopGame(); showScreen('menu'); updateCoinDisplays(); updateMenuUserBadge(); updateDailyBadge();
   // Show endless best score
   const s=getSave();
   const badge=document.getElementById('endless-best-badge');
@@ -592,6 +715,7 @@ function showMenu(){
 function showStory(){ showScreen('story'); buildStoryUI(); updateCoinDisplays(); }
 function showMyLevels(){ showScreen('mylevels'); buildMyLevelsUI(); updateCoinDisplays(); }
 function showShop(){ showScreen('shop'); buildShopUI(); updateCoinDisplays(); }
+function showHats(){ showScreen('hats'); buildHatUI(); updateCoinDisplays(); }
 function showCommunity(){ showScreen('community'); updateCoinDisplays(); loadCommunityLevels(); }
 function showLeaderboard(){ showScreen('leaderboard'); updateCoinDisplays(); syncCoinsToLeaderboard().then(()=>loadLeaderboard()); }
 function showBuild(lvlData,isStory,storyNum){ showScreen('game'); requestAnimationFrame(()=>startGameEngine(lvlData,false,isStory,storyNum)); }
@@ -604,6 +728,7 @@ let endlessLevelNum=1;
 let endlessTotalCoins=0;
 let endlessBestScore=0;
 let endlessRunSeed=1; // unique per run so every playthrough gives different levels
+let endlessTheme=null; // null = all worlds, 0-9 = specific world theme
 
 function startEndless(){
   const s=getSave();
@@ -616,7 +741,7 @@ function startEndless(){
 
 function showEndlessLevel(){
   const difficulty=Math.min(10,1+Math.floor((endlessLevelNum-1)*0.35));
-  const worldIdx=Math.min(9,Math.floor((endlessLevelNum-1)/3));
+  const worldIdx=endlessTheme!==null?endlessTheme:Math.min(9,Math.floor((endlessLevelNum-1)/3));
   // Combine run seed + level number so each level is unique AND changes every run
   const levelSeed=endlessRunSeed*1000+endlessLevelNum;
   const lvlData=generateStoryLevel(levelSeed, worldIdx, difficulty, true); // true = endless (fewer coins)
@@ -634,7 +759,7 @@ function advanceEndless(){
 
 function updateCoinDisplays(){
   const s=getSave();
-  ['menu','story','mylevels','shop','community','leaderboard','lb','profile'].forEach(id=>{
+  ['menu','story','mylevels','shop','community','leaderboard','lb','profile','daily'].forEach(id=>{
     const el=document.getElementById(id+'-coin-count');
     if(el) el.textContent=s.coins;
   });
@@ -648,9 +773,23 @@ function buildStoryUI(){
   const container=document.getElementById('story-worlds');
   container.innerHTML='';
   WORLDS.forEach(world=>{
+    // Secret worlds: show teaser if all 50 done, hide completely otherwise
+    if(world.secret && s.storyProgress<50){
+      const sec=document.createElement('div');
+      sec.className='world-section fadeIn';
+      sec.style.cssText='opacity:0.35;border:2px dashed rgba(255,0,110,0.25);padding:16px;margin:8px 0;';
+      sec.innerHTML=`<div class="world-title" style="color:#555;font-size:16px">🔒 ???  — Complete all 50 story levels to unlock secret worlds</div>`;
+      container.appendChild(sec);
+      return;
+    }
     const sec=document.createElement('div');
     sec.className='world-section fadeIn';
-    sec.innerHTML=`<div class="world-title" style="color:${world.color}">${world.name}</div>`;
+    if(world.secret){
+      sec.classList.add('world-secret-glow');
+      sec.style.animation='secretPulse 2s ease infinite';
+    }
+    const titleExtra=world.secret?'<span style="font-size:13px;color:#ff006e;margin-left:8px;vertical-align:middle;animation:secretPulse 1s infinite">🔓 SECRET</span>':'';
+    sec.innerHTML=`<div class="world-title" style="color:${world.color}">${world.name}${titleExtra}</div>`;
     const grid=document.createElement('div');
     grid.className='level-grid';
     world.levels.forEach(lv=>{
@@ -660,7 +799,8 @@ function buildStoryUI(){
       card.className='level-card'+(unlocked?'':' locked')+(completed?' completed':'');
       card.style.borderColor=world.color;
       const stars='⭐'.repeat(Math.min(lv.diff,10));
-      card.innerHTML=`<div class="level-num" style="color:${world.color}">${lv.num}</div><div class="level-name">${lv.name}</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">${stars}</div>`;
+      const bossTag=lv.boss?'<div style="font-size:9px;color:#ff4500;font-weight:bold;margin-top:1px">👿 BOSS</div>':'';
+      card.innerHTML=`<div class="level-num" style="color:${world.color}">${lv.num}</div><div class="level-name">${lv.name}</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">${stars}</div>${bossTag}`;
       if(unlocked) card.onclick=()=>{ showPlayLevel(generateStoryLevel(lv.num),true,lv.num); };
       grid.appendChild(card);
     });
@@ -1212,7 +1352,7 @@ function initGameState(){
     cameraX:0,cameraY:0,
     currentColor:'#457b9d',tileType:1,
     mouseDown:false,mouseRight:false,lastTile:null,
-    isStoryMode:false,storyLevelNum:null,isPlayOnly:false,editingSavedIdx:-1,isEndless:false,_worldBonusMsg:null,
+    isStoryMode:false,storyLevelNum:null,isPlayOnly:false,editingSavedIdx:-1,isEndless:false,isDaily:false,_worldBonusMsg:null,_dailyCoinMsg:null,
     player:null,zoom:1,rafId:null,
     weatherParticles:[],
     worldTheme:0,
@@ -1309,6 +1449,8 @@ function stopGame(){
   if(G.rafId){cancelAnimationFrame(G.rafId);G.rafId=null;}
   removeInputs();
   touchKeys.left=false;touchKeys.right=false;touchKeys.jump=false;
+  const bar=document.getElementById('boss-hp-bar');
+  if(bar) bar.style.display='none';
 }
 function exitGame(){ stopGame(); showMenu(); }
 
@@ -1496,7 +1638,18 @@ function spawnEnemiesFromGrid(){
   for(let r=0;r<LEVEL_ROWS;r++) for(let c=0;c<LEVEL_COLS;c++){
     const t=G.grid[r][c];
     if(t.type===4) G.enemies.push({x:c*TILE,y:(r-1)*TILE,w:28,h:28,vx:-1.4,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#8B4513',type:'goomba',isBig:false});
-    if(t.type===11) G.enemies.push({x:c*TILE-4,y:(r-2)*TILE,w:40,h:40,vx:-0.9,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#8338ec',type:'goomba',isBig:true,stomps:0});
+    if(t.type===11){
+      const isBoss=!!(t.boss);
+      const hp=t.bossHp||0;
+      G.enemies.push({
+        x:c*TILE-4,y:(r-2)*TILE,w:40,h:40,vx:-0.9,vy:0,
+        onGround:false,dead:false,deathAnim:0,
+        color:t.color||'#8338ec',type:'goomba',isBig:true,stomps:0,
+        isBoss,bossHp:hp,bossMaxHp:hp,
+        bossPhase:'patrol', // patrol | charge | jump | shoot | stun
+        bossTimer:0,bossDir:-1,
+      });
+    }
     if(t.type===12) G.enemies.push({x:c*TILE,y:r*TILE,w:TILE,h:TILE,vx:0,vy:0,onGround:true,dead:false,deathAnim:0,color:t.color||'#06d6a0',type:'cannon',fireTimer:60+Math.floor(c*17%80)});
     if(t.type===10) G.enemies.push({x:c*TILE+2,y:r*TILE,w:28,h:28,vx:0,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#ff006e',type:'dropper',dropping:false,originY:r*TILE});
     if(t.type===24) G.enemies.push({x:c*TILE,y:r*TILE,w:26,h:20,vx:1.2,vy:0,onGround:false,dead:false,deathAnim:0,color:t.color||'#6d6875',type:'bat',flapT:0,originY:r*TILE,amplitude:40});
@@ -1782,6 +1935,10 @@ function updatePlayer(){
   const vW=canvas.width/G.zoom,vH=canvas.height/G.zoom;
   G.cameraX=Math.max(0,Math.min(p.x-vW/2,LEVEL_COLS*TILE-vW));
   G.cameraY=Math.max(0,Math.min(p.y-vH/2,LEVEL_ROWS*TILE-vH));
+  // Coin trail effect
+  if(p.animT%4===0) spawnTrail(p.x+p.w/2,p.y+p.h*0.7);
+  // Boss HP bar
+  updateBossHPBar();
 }
 
 function rectsOverlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
@@ -1834,6 +1991,10 @@ function winPlayer(){
     const endlessScore=G.score+(endlessTotalCoins+G.coinsCollected)*10;
     if(endlessScore>endlessBestScore) endlessBestScore=endlessScore;
     s.endlessBest=endlessBestScore;
+  }
+  if(G.isDaily){
+    const dailyScore=G.score+G.coinsCollected*10;
+    setTimeout(()=>submitDailyScore(dailyScore),500);
   }
   writeSave(s);updateCoinDisplays();
   setTimeout(syncCoinsToLeaderboard,800);
@@ -1902,7 +2063,98 @@ function updateEnemies(){
       }
       return;
     }
-    // Goomba
+    // ── KING BOSS AI ──
+    if(e.isBoss&&!e.dead){
+      const p=G.player;
+      const dx=p.x-e.x, dist=Math.abs(dx);
+      e.bossTimer--;
+
+      if(e.bossPhase==='patrol'){
+        e.vx=e.bossDir*1.2;
+        if(e.bossTimer<=0){
+          // Pick next action based on HP
+          const roll=Math.random();
+          const threshold=e.bossHp/e.bossMaxHp; // more aggressive at low HP
+          if(roll<0.35||threshold<0.4){ e.bossPhase='charge';e.bossTimer=30;e.bossDir=dx>0?1:-1; }
+          else if(roll<0.65){ e.bossPhase='jump';e.bossTimer=20; }
+          else { e.bossPhase='shoot';e.bossTimer=40; }
+        }
+        // Reverse at level edges
+        if(e.x<TILE*2){e.bossDir=1;} if(e.x+e.w>TILE*(LEVEL_COLS-2)){e.bossDir=-1;}
+      } else if(e.bossPhase==='charge'){
+        if(e.bossTimer>0&&e.bossTimer<=10) e.vx=0; // wind-up pause
+        else if(e.bossTimer<=0){ e.vx=e.bossDir*6.5; e.bossTimer=50; e.bossPhase='charging'; }
+      } else if(e.bossPhase==='charging'){
+        e.vx=e.bossDir*6.5;
+        if(e.x<TILE||e.x+e.w>TILE*(LEVEL_COLS-1)){ e.vx*=-1;e.bossDir*=-1;e.bossPhase='stun';e.bossTimer=40; }
+        if(e.bossTimer<=0){ e.bossPhase='patrol';e.bossTimer=60+Math.floor(Math.random()*40);e.vx=e.bossDir*1.2; }
+      } else if(e.bossPhase==='jump'){
+        if(e.bossTimer<=0&&e.onGround){ e.vy=-13;e.bossPhase='airborne';e.bossTimer=80; }
+      } else if(e.bossPhase==='airborne'){
+        // Chase player horizontally in air
+        e.vx+=(p.x>e.x?0.4:-0.4); e.vx=Math.max(-5,Math.min(5,e.vx));
+        if(e.onGround&&e.bossTimer<60){ e.bossPhase='patrol';e.bossTimer=60; }
+      } else if(e.bossPhase==='shoot'){
+        if(e.bossTimer===20){
+          e.vx=0;
+          // Shoot 3 spread projectiles toward player
+          for(let i=-1;i<=1;i++){
+            const ang=Math.atan2(p.y-e.y,p.x-e.x)+i*0.4;
+            G.projectiles.push({x:e.x+e.w/2,y:e.y+e.h/2-5,w:10,h:10,vx:Math.cos(ang)*5,vy:Math.sin(ang)*5,dead:false,color:'#ff4500',isBossProj:true});
+          }
+        }
+        if(e.bossTimer<=0){ e.bossPhase='patrol';e.bossTimer=80; }
+      } else if(e.bossPhase==='stun'){
+        e.vx*=0.8;
+        if(e.bossTimer<=0){ e.bossPhase='patrol';e.bossTimer=60; }
+      }
+
+      // Gravity
+      e.vy+=0.55; resolveEnt(e,false);
+      if(e.x<0){e.x=0;e.bossDir=1;} if(e.x+e.w>LEVEL_COLS*TILE){e.x=LEVEL_COLS*TILE-e.w;e.bossDir=-1;}
+
+      // Player collision with boss
+      if(!p.dead&&rectsOverlap(p,e)){
+        const stomping=p.vy>1&&p.y+p.h<e.y+e.h*0.4+8;
+        if(stomping||(G.powerup==='star')){
+          // Hit!
+          e.bossHp--;
+          p.vy=-9;
+          spawnParticles(e.x+e.w/2,e.y,'#ffd700',16);
+          e.bossPhase='stun';e.bossTimer=60;
+          if(G.powerup==='star') e.bossHp=0;
+          if(e.bossHp<=0){
+            e.dead=true;G.score+=5000;
+            spawnParticles(e.x+e.w/2,e.y+e.h/2,'#ffd700',40);
+            spawnParticles(e.x+e.w/2,e.y+e.h/2,'#ff4500',30);
+          }
+          // Update HP bar
+          const fill=document.getElementById('boss-bar-fill');
+          if(fill) fill.style.width=Math.max(0,(e.bossHp/e.bossMaxHp)*100)+'%';
+        } else if(G.powerup==='shield'){
+          G.powerup=null;G.powerupTimer=0;updatePowerupHUD();
+          e.bossPhase='stun';e.bossTimer=40;
+        } else {
+          killPlayer();
+        }
+      }
+
+      // Show/update boss HP bar
+      const bar=document.getElementById('boss-hp-bar');
+      if(bar&&!e.dead){
+        bar.style.display='flex';
+        const fill=document.getElementById('boss-bar-fill');
+        const lbl=document.getElementById('boss-name-label');
+        if(fill) fill.style.width=Math.max(0,(e.bossHp/e.bossMaxHp)*100)+'%';
+        // Flash red when hit
+        if(fill&&e.bossPhase==='stun') fill.style.background='linear-gradient(90deg,#fff,#ff4500)';
+        else if(fill) fill.style.background='linear-gradient(90deg,#e63946,#ff4500)';
+        // Boss name changes with HP
+        if(lbl) lbl.textContent=e.bossHp<=1?'💀 FINAL FORM':e.bossHp<=e.bossMaxHp/2?'😡 ENRAGED':e.bossHp<=e.bossMaxHp?`👑 KING BOSS (${e.bossHp} HP)`:`👑 KING BOSS`;
+      }
+      return;
+    }
+    if(e.isBoss&&e.dead){e.deathAnim+=0.04;return;} // skip normal logic
     e.vy+=0.55;
     if(e.onGround){
       const look=e.vx>0?Math.floor((e.x+e.w+2)/TILE):Math.floor((e.x-2)/TILE);
@@ -2476,22 +2728,50 @@ function drawEnemy(e){
 
 function renderGoombaShape(e,ox,oy){
   const dir=e.vx<=0?-1:1;
-  const sc=e.isBig?1.5:1;
+  const sc=(e.isBoss?2.2:e.isBig?1.5:1);
   ctx.save();ctx.translate(ox+e.w/2,oy+e.h/2);ctx.scale(dir*sc,sc);
   const bob=e.onGround?Math.sin(G.frame*0.2+e.x)*1.5:0;
-  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(0,e.h/(2*sc)+2,10,3,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=e.color||'#8B4513';
-  ctx.beginPath();ctx.ellipse(0,bob,13,14,0,0,Math.PI*2);ctx.fill();
-  if(e.isBig){
-    ctx.fillStyle='#ffd700';
-    ctx.beginPath();ctx.moveTo(-8,bob-14);ctx.lineTo(-6,bob-20);ctx.lineTo(-2,bob-16);ctx.lineTo(0,bob-22);ctx.lineTo(2,bob-16);ctx.lineTo(6,bob-20);ctx.lineTo(8,bob-14);ctx.closePath();ctx.fill();
+
+  // Boss aura
+  if(e.isBoss){
+    const auraPhase=e.bossPhase==='charging'?1:e.bossPhase==='stun'?0.3:0.6+Math.sin(G.frame*0.08)*0.2;
+    ctx.save();ctx.globalAlpha=auraPhase*0.5;
+    ctx.fillStyle=e.bossHp<=e.bossMaxHp/2?'#ff4500':'#ff006e';
+    ctx.beginPath();ctx.ellipse(0,bob,20,22,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
   }
+
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(0,e.h/(2*sc)+2,10,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=e.isBoss?(e.bossPhase==='stun'?'#888':e.color||'#8338ec'):e.color||'#8B4513';
+  ctx.beginPath();ctx.ellipse(0,bob,13,14,0,0,Math.PI*2);ctx.fill();
+
+  // Crown for big goomba and king boss
+  if(e.isBig||e.isBoss){
+    ctx.fillStyle=e.isBoss?'#ffd700':'#ffd700';
+    ctx.beginPath();ctx.moveTo(-8,bob-14);ctx.lineTo(-6,bob-20);ctx.lineTo(-2,bob-16);ctx.lineTo(0,bob-24);ctx.lineTo(2,bob-16);ctx.lineTo(6,bob-20);ctx.lineTo(8,bob-14);ctx.closePath();ctx.fill();
+    // Crown gems
+    if(e.isBoss){
+      ctx.fillStyle='#ff4500';ctx.beginPath();ctx.arc(0,bob-22,3,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#4cc9f0';ctx.beginPath();ctx.arc(-5,bob-17,2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(5,bob-17,2,0,Math.PI*2);ctx.fill();
+    }
+  }
+
   ctx.fillStyle='rgba(255,255,255,0.2)';
   ctx.beginPath();ctx.arc(-4,bob-5,3,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.arc(4,bob-7,2,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='rgba(255,220,180,0.85)';ctx.beginPath();ctx.ellipse(0,bob+4,8,7,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff';ctx.fillRect(-8,bob-9,6,5);ctx.fillRect(2,bob-9,6,5);
+
+  // Eyes — glowing red for boss
+  ctx.fillStyle=e.isBoss?'#ff4500':'#fff';
+  ctx.fillRect(-8,bob-9,6,5);ctx.fillRect(2,bob-9,6,5);
   ctx.fillStyle='#000';ctx.fillRect(-7,bob-8,3,3);ctx.fillRect(3,bob-8,3,3);
+  if(e.isBoss){
+    ctx.fillStyle='rgba(255,69,0,0.7)';
+    ctx.beginPath();ctx.arc(-5,bob-6,4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(5,bob-6,4,0,Math.PI*2);ctx.fill();
+  }
+
   ctx.strokeStyle='#000';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(-9,bob-12);ctx.lineTo(-2,bob-10);ctx.stroke();
   ctx.beginPath();ctx.moveTo(8,bob-12);ctx.lineTo(2,bob-10);ctx.stroke();
@@ -2690,6 +2970,10 @@ function gameLoop(){
       G.winTimer--;
       if(G.isEndless){
         drawMsgOverlay(`LEVEL ${endlessLevelNum} CLEAR! 🎉`,`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins  |  Next level...`,'#06d6a0');
+      } else if(G.isDaily){
+        const dailyScore=G.score+G.coinsCollected*10;
+        const coinMsg=G._dailyCoinMsg||'';
+        drawMsgOverlay('📅 DAILY CLEAR! 🎉',`Score: ${dailyScore.toLocaleString()}  |  Submitted to leaderboard!${coinMsg?'  |  '+coinMsg:''}`,'#ffd700');
       } else if(G.isStoryMode){
         const bonusMsg=G._worldBonusMsg?`  |  ${G._worldBonusMsg}`:'';
         drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins earned${bonusMsg}`,'#ffbe0b');
@@ -2725,7 +3009,7 @@ function saveLevel(){
 function clearLevel(){ if(confirm('Clear the entire level?')){G.grid=createGrid();G.enemies=[];G.coins=[];} }
 
 // =============================================
-// STORY LEVEL GENERATOR (50 levels, 10 worlds)
+// STORY LEVEL GENERATOR (65 levels, 13 worlds)
 // =============================================
 function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless){
   const grid=createGrid();
@@ -2736,9 +3020,15 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     ['#52b788','#95d5b2'],['#e9c46a','#f4a261'],['#90e0ef','#caf0f8'],['#8338ec','#b5179e'],
     ['#606c38','#283618'],['#e63946','#9d0208'],['#48cae4','#0077b6'],['#4cc9f0','#4361ee'],
     ['#7209b7','#3a0ca3'],['#ffbe0b','#fb8500'],
+    // Secret worlds
+    ['#ff006e','#ff4d8f'],['#8000ff','#b34dff'],['#ff0000','#ff6666'],
   ];
-  const pc=platformColors[worldIdx]||platformColors[0];
-  const difficulty=overrideDifficulty!==undefined?overrideDifficulty:Math.min(10,Math.floor((num-1)/5)*2+((num-1)%5)+1);
+  const pc=platformColors[Math.min(worldIdx,12)]||platformColors[0];
+  // Boss level: every level divisible by 10 OR flagged in WORLDS
+  const isBossLevel=(num%10===0)||WORLDS.flatMap(w=>w.levels).some(lv=>lv.num===num&&lv.boss);
+  const difficulty=overrideDifficulty!==undefined?overrideDifficulty:
+    num<=50?Math.min(10,Math.floor((num-1)/5)*2+((num-1)%5)+1):
+    10+Math.floor((num-51)/5); // 11-14 for secret worlds
 
   // Pick a layout mode — endless gets varied modes, story uses standard
   const LAYOUT_MODES=['staircase','gauntlet','islands','cavern','zigzag','multilevel'];
@@ -2977,11 +3267,13 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
 
   } else {
     // === STANDARD (used for story mode) ===
-    const maxGapX=Math.min(4,2+Math.floor(difficulty*0.2));
-    const maxRiseY=Math.min(2,1+Math.floor(difficulty*0.15));
-    const minPlatLen=Math.max(3,5-Math.floor(difficulty*0.3));
-    const maxPlatLen=Math.max(4,7-Math.floor(difficulty*0.3));
-    const numPlatforms=10+difficulty*2;
+    const maxGapX=Math.min(4,2+Math.floor(Math.min(difficulty,10)*0.2));
+    const maxRiseY=Math.min(2,1+Math.floor(Math.min(difficulty,10)*0.15));
+    const minPlatLen=Math.max(2,5-Math.floor(Math.min(difficulty,10)*0.35));
+    const maxPlatLen=Math.max(3,7-Math.floor(Math.min(difficulty,10)*0.35));
+    const numPlatforms=10+Math.min(difficulty,10)*2+(difficulty>10?(difficulty-10)*3:0);
+    // Secret worlds: all floor is lava
+    const deathFloorType=difficulty>10?7:worldIdx===5?7:2;
     let cx=9,cy=LEVEL_ROWS-3;
     let prevWasMoving=false;
     let hasKeyDoor=worldIdx>=3&&num%3===0;
@@ -3065,10 +3357,171 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
         if(bx+3<endStart2) for(let j=0;j<4;j++) if(bx+j<endStart2) grid[br][bx+j]={type:1,color:pc[0]};
       }
     }
-    fillDeathFloor();
+    // Death floor (lava for secret worlds + volcanic, spikes otherwise)
+    for(let c=9;c<LEVEL_COLS-9;c++){
+      if(!grid[LEVEL_ROWS-1][c]||grid[LEVEL_ROWS-1][c].type===0)
+        grid[LEVEL_ROWS-1][c]={type:deathFloorType,color:deathFloorType===7?'#e63946':'#aaa'};
+    }
   }
 
-  return{name:`Level ${num}`,grid,layoutMode};
+  // ── BOSS LEVEL INJECTION ──
+  if(isBossLevel&&!isEndless){
+    // Boss HP scales with world: worlds 1-2=3hp, 3-6=5hp, 7-10=7hp, secret worlds=9-12hp
+    const bossHp=worldIdx<=1?3:worldIdx<=5?5:worldIdx<=9?7:worldIdx<=10?9:worldIdx<=11?10:12;
+
+    // Wider clear arena across the whole right third of the level
+    const arenaLeft=LEVEL_COLS-22;
+    const arenaRow=LEVEL_ROWS-3;
+    // Floor platform
+    for(let c=arenaLeft;c<LEVEL_COLS-2;c++) grid[arenaRow][c]={type:1,color:pc[0]};
+    // Clear air above arena
+    for(let c=arenaLeft;c<LEVEL_COLS-2;c++) for(let row=0;row<=arenaRow-1;row++)
+      if(grid[row][c]&&grid[row][c].type!==5) grid[row][c]={type:0,color:'#457b9d'};
+    // Mid-air platform for player to stomp from
+    const midRow=arenaRow-5;
+    for(let c=arenaLeft+2;c<arenaLeft+10;c++) grid[midRow][c]={type:1,color:pc[0]};
+    for(let c=arenaLeft+12;c<arenaLeft+18;c++) grid[midRow][c]={type:1,color:pc[0]};
+    // King Boss in center of floor arena
+    const bossMidC=arenaLeft+Math.floor((LEVEL_COLS-2-arenaLeft)/2);
+    grid[arenaRow-1][bossMidC]={type:11,color:pc[0],boss:true,bossHp,bossMaxHp:bossHp};
+    // Power-ups on approach platform
+    grid[arenaRow-1][arenaLeft-4]={type:22,color:TILE_COLORS[22]}; // star
+    grid[arenaRow][arenaLeft-4]={type:1,color:pc[0]};
+    grid[arenaRow-1][arenaLeft-7]={type:23,color:TILE_COLORS[23]}; // shield
+    grid[arenaRow][arenaLeft-7]={type:1,color:pc[0]};
+    grid[arenaRow-1][arenaLeft-10]={type:21,color:TILE_COLORS[21]}; // mushroom
+    grid[arenaRow][arenaLeft-10]={type:1,color:pc[0]};
+    // Extra guard goombas
+    for(let c=arenaLeft+3;c<arenaLeft+16;c+=5) grid[arenaRow-1][c]={type:4,color:pc[0]};
+  }
+
+  return{name:`Level ${num}`,grid,layoutMode,isBossLevel};
+}
+
+// =============================================
+// DAILY CHALLENGE
+// =============================================
+let G_daily={isDaily:false};
+
+function getDailyDateStr(){
+  const d=new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+function getDailySeed(){
+  const s=getDailyDateStr();
+  let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h)+s.charCodeAt(i);
+  return (h>>>0)%99991+1;
+}
+
+async function showDaily(){
+  showScreen('daily'); updateCoinDisplays();
+  const inner=document.getElementById('daily-inner');
+  inner.innerHTML='<div class="comm-loading">Loading Daily Challenge...</div>';
+
+  const dateStr=getDailyDateStr();
+  const s=getSave();
+  const alreadyPlayed=s.dailyPlayed===dateStr;
+  const myScore=s.dailyScore||0;
+
+  // Load leaderboard
+  let scores=[];
+  try{
+    scores=await sbFetch(`bf_daily_scores?date=eq.${dateStr}&order=score.desc&limit=20&select=username,score`)||[];
+  }catch(e){ scores=[]; }
+
+  const myRank=scores.findIndex(r=>r.username===currentUser?.username)+1;
+
+  inner.innerHTML='';
+
+  // Header card
+  const hdr=document.createElement('div');
+  hdr.className='daily-header-card';
+  hdr.innerHTML=`
+    <div class="daily-title">📅 DAILY CHALLENGE</div>
+    <div class="daily-subtitle">A NEW LEVEL EVERY DAY</div>
+    <div class="daily-date">📆 ${dateStr}</div>
+    ${alreadyPlayed
+      ? `<div class="daily-played-msg">✅ Today's score: <span class="daily-score-display">${myScore.toLocaleString()}</span></div>
+         ${myRank>0?`<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:4px">Your rank: #${myRank}</div>`:''}`
+      : `<button class="daily-play-btn" onclick="startDailyChallenge()">▶ PLAY TODAY'S LEVEL</button>`
+    }
+    ${!currentUser||currentUser.isGuest?'<div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px">Log in to submit your score to the leaderboard</div>':''}
+  `;
+  inner.appendChild(hdr);
+
+  // Leaderboard
+  const lb=document.createElement('div');
+  lb.className='daily-lb-section';
+  lb.innerHTML=`<div class="daily-lb-title">🏆 Today's Leaderboard</div>`;
+  if(scores.length===0){
+    lb.innerHTML+=`<div style="color:rgba(255,255,255,0.4);font-size:14px">No scores yet today — be the first!</div>`;
+  } else {
+    scores.forEach((row,i)=>{
+      const isMe=row.username===currentUser?.username;
+      const rankEmoji=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+      const div=document.createElement('div');
+      div.className='daily-lb-row'+(isMe?' daily-you':'');
+      div.innerHTML=`<span class="daily-lb-rank">${rankEmoji}</span><span class="daily-lb-name">${row.username}${isMe?' (you)':''}</span><span class="daily-lb-score">🏅 ${Number(row.score).toLocaleString()}</span>`;
+      lb.appendChild(div);
+    });
+  }
+  inner.appendChild(lb);
+}
+
+function startDailyChallenge(){
+  const seed=getDailySeed();
+  // Pick a fun world theme based on day of week
+  const dow=new Date().getUTCDay(); // 0-6
+  const worldIdx=dow%10;
+  const lvlData=generateStoryLevel(seed, worldIdx, 6, false);
+  lvlData.name=`📅 Daily ${getDailyDateStr()}`;
+  G_daily={isDaily:true, dateStr:getDailyDateStr()};
+  showScreen('game');
+  requestAnimationFrame(()=>{
+    startGameEngine(lvlData,true,false,null,false);
+    G.isDaily=true;
+  });
+}
+
+async function submitDailyScore(score){
+  const dateStr=getDailyDateStr();
+  const s=getSave();
+  // Only submit if this is a new high score for today
+  if(s.dailyPlayed===dateStr&&(s.dailyScore||0)>=score) return;
+  s.dailyPlayed=dateStr;
+  s.dailyScore=score;
+  // Give coins for daily completion
+  const coinsEarned=Math.floor(score/50)+100;
+  s.coins+=coinsEarned;
+  G._dailyCoinMsg=`📅 Daily complete! +${coinsEarned} coins`;
+  writeSave(s); updateCoinDisplays();
+
+  // Submit to Supabase (upsert — one score per user per day)
+  if(currentUser&&!currentUser.isGuest){
+    try{
+      await sbFetch('bf_daily_scores',{
+        method:'POST',
+        prefer:'resolution=merge-duplicates',
+        headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+        body:{username:currentUser.username,date:dateStr,score},
+      });
+    }catch(e){console.warn('Daily score submit failed',e);}
+  }
+
+  // Update daily badge on menu
+  updateDailyBadge();
+}
+
+function updateDailyBadge(){
+  const badge=document.getElementById('daily-status-badge');
+  if(!badge) return;
+  const s=getSave();
+  const today=getDailyDateStr();
+  if(s.dailyPlayed===today){
+    badge.textContent=`✅ Played! Score: ${(s.dailyScore||0).toLocaleString()}`;
+  } else {
+    badge.textContent='🎯 New challenge available!';
+  }
 }
 
 // =============================================
@@ -3210,34 +3663,90 @@ async function syncCoinsToLeaderboard(){
 // COMMUNITY
 // =============================================
 let communitySort='likes';
+let communityTag='';
+let communitySearchQ='';
+let communitySearchTimer=null;
 function setCommunitySort(mode){
   communitySort=mode;
-  ['likes','new','rating','plays'].forEach(m=>document.getElementById('sort-'+m)?.classList.toggle('active',m===mode));
+  ['likes','new','rating','plays','feed'].forEach(m=>document.getElementById('sort-'+m)?.classList.toggle('active',m===mode));
   loadCommunityLevels();
+}
+function setCommunityTag(tag){
+  communityTag=tag;
+  ['all','easy','hard','art'].forEach(t=>document.getElementById('tag-'+t)?.classList.toggle('active',t===tag||(t==='all'&&!tag)));
+  loadCommunityLevels();
+}
+function communitySearchDebounce(){
+  clearTimeout(communitySearchTimer);
+  communitySearchTimer=setTimeout(()=>{
+    communitySearchQ=(document.getElementById('comm-search-input')?.value||'').trim();
+    loadCommunityLevels();
+  },400);
 }
 async function loadCommunityLevels(){
   const list=document.getElementById('community-list');
   list.innerHTML='<div class="comm-loading">Loading levels...</div>';
   try{
-    const orderMap={likes:'likes.desc',new:'published_at.desc',rating:'rating.desc',plays:'plays.desc'};
-    const order=orderMap[communitySort]||'likes.desc';
-    const levels=await sbFetch(`bf_levels?select=*&order=${order}&limit=50`);
-    if(!levels||levels.length===0){
-      list.innerHTML='<div class="comm-empty">No community levels yet!<br>Be the first to publish one from MY LEVELS.</div>';return;
-    }
-    let likedSet=new Set(),ratedSet=new Map();
+    // Level of the Week banner
+    let lotwHtml='';
+    try{
+      const lotw=await sbFetch(`bf_meta?key=eq.lotw&select=*`);
+      if(lotw&&lotw[0]&&lotw[0].value){
+        const lv=JSON.parse(lotw[0].value);
+        lotwHtml=`<div class="lotw-banner">
+          <span class="lotw-badge">🏆 LEVEL OF THE WEEK</span>
+          <div style="flex:1"><div class="lotw-title">${escHtml(lv.name)}</div>
+          <div class="lotw-meta">by <span class="profile-link" onclick="showProfile('${escHtml(lv.author)}')">${escHtml(lv.author)}</span></div></div>
+          <button class="play-comm-btn" onclick="playLOTW(${JSON.stringify(lv.id)})">▶ PLAY</button>
+        </div>`;
+      }
+    }catch(e){}
+
+    // Build query
+    let followedAuthors=[];
+    let likedSet=new Set(),ratedSet=new Map(),followingSet=new Set();
     if(currentUser&&!currentUser.isGuest){
       try{
         const liked=await sbFetch(`bf_likes?username=eq.${encodeURIComponent(currentUser.username)}&select=level_id`);
         if(liked)liked.forEach(r=>likedSet.add(r.level_id));
         const rated=await sbFetch(`bf_ratings?username=eq.${encodeURIComponent(currentUser.username)}&select=level_id,rating`);
         if(rated)rated.forEach(r=>ratedSet.set(r.level_id,r.rating));
+        const follows=await sbFetch(`bf_follows?follower=eq.${encodeURIComponent(currentUser.username)}&select=following`);
+        if(follows)follows.forEach(f=>{followingSet.add(f.following);followedAuthors.push(f.following);});
       }catch(e){}
     }
-    list.innerHTML='';
+
+    let levels;
+    if(communitySort==='feed'){
+      if(!currentUser||currentUser.isGuest||followedAuthors.length===0){
+        list.innerHTML='<div class="comm-empty">Follow creators to see their levels here!<br><small style="color:rgba(255,255,255,0.2)">Visit a profile and click Follow.</small></div>';return;
+      }
+      const authorsQ=followedAuthors.map(a=>`"${a}"`).join(',');
+      levels=await sbFetch(`bf_levels?author=in.(${encodeURIComponent(authorsQ)})&order=published_at.desc&limit=50`);
+    } else {
+      const orderMap={likes:'likes.desc',new:'published_at.desc',rating:'rating.desc',plays:'plays.desc'};
+      const order=orderMap[communitySort]||'likes.desc';
+      let url=`bf_levels?select=*&order=${order}&limit=100`;
+      if(communityTag) url+=`&tags=cs.{${communityTag}}`;
+      levels=await sbFetch(url);
+      // Client-side search filter
+      if(communitySearchQ&&levels){
+        const q=communitySearchQ.toLowerCase();
+        levels=levels.filter(lv=>(lv.name||'').toLowerCase().includes(q)||(lv.author||'').toLowerCase().includes(q));
+      }
+      if(levels) levels=levels.slice(0,50);
+    }
+
+    if(!levels||levels.length===0){
+      list.innerHTML=(lotwHtml||'')+'<div class="comm-empty">No levels found!<br>Be the first to publish one from MY LEVELS.</div>';return;
+    }
+    list.innerHTML=lotwHtml||'';
     levels.forEach((lv,idx)=>{
       const card=document.createElement('div');
       card.className='comm-level-card fadeIn';
+      card.style.flexDirection='column';card.style.alignItems='stretch';
+      const topRow=document.createElement('div');
+      topRow.style.cssText='display:flex;align-items:center;gap:14px;';
       const rank=document.createElement('div');
       rank.className='comm-rank'+(idx===0?' gold':idx===1?' silver':idx===2?' bronze':'');
       rank.textContent=idx+1;
@@ -3249,11 +3758,16 @@ async function loadCommunityLevels(){
       const ts=lv.published_at?new Date(lv.published_at).getTime():0;
       const stars=lv.rating?'⭐'.repeat(Math.round(lv.rating)):'—';
       const plays=lv.plays||0;
+      const isFollowing=followingSet.has(lv.author);
+      const canFollow=currentUser&&!currentUser.isGuest&&lv.author!==currentUser.username;
       info.innerHTML=`<div class="comm-level-name">${escHtml(lv.name)}</div>
-        <div class="comm-meta">by <span class="profile-link" onclick="showProfile('${escHtml(lv.author)}')">${escHtml(lv.author)}</span> · ${timeAgo(ts)} · ${stars} · ▶ ${plays.toLocaleString()}</div>`;
+        <div class="comm-meta">by <span class="profile-link" onclick="showProfile('${escHtml(lv.author)}')">${escHtml(lv.author)}</span>
+        ${canFollow?`<button class="follow-btn${isFollowing?' following':''}" id="follow-${escHtml(lv.author)}" onclick="toggleFollow('${escHtml(lv.author)}',this)">${isFollowing?'✓ Following':'+ Follow'}</button>`:''}
+        · ${timeAgo(ts)} · ${stars} · ▶ ${plays.toLocaleString()}
+        ${lv.tags&&lv.tags.length?lv.tags.map(t=>`<span style="font-size:11px;padding:1px 6px;background:rgba(255,255,255,0.08);margin-left:4px">${escHtml(t)}</span>`).join(''):''}
+        </div>`;
       const actions=document.createElement('div');
       actions.className='comm-actions';
-      // Star rating
       const rateDiv=document.createElement('div');
       rateDiv.className='star-rating';
       const userRating=ratedSet.get(lv.id)||0;
@@ -3269,18 +3783,93 @@ async function loadCommunityLevels(){
       likeBtn.className='like-btn'+(liked?' liked':'');
       likeBtn.innerHTML=`❤️ ${(lv.likes||0).toLocaleString()}`;
       likeBtn.onclick=()=>toggleLike(lv,likeBtn,likedSet);
+      const commentsBtn=document.createElement('button');
+      commentsBtn.className='comm-comments-toggle';
+      commentsBtn.textContent='💬 Comments';
       const playBtn=document.createElement('button');
       playBtn.className='play-comm-btn';playBtn.textContent='▶ PLAY';
-      playBtn.onclick=()=>{
-        currentCommunityLevelId=lv.id;
-        showPlayLevel(lv,false,null);
+      playBtn.onclick=()=>{ currentCommunityLevelId=lv.id; showPlayLevel(lv,false,null); };
+      actions.append(rateDiv,likeBtn,commentsBtn,playBtn);
+      // Comments section (lazy loaded)
+      const commSection=document.createElement('div');
+      commSection.className='comm-comments-section';
+      commSection.style.display='none';
+      commentsBtn.onclick=()=>{
+        const open=commSection.style.display!=='none';
+        commSection.style.display=open?'none':'block';
+        commentsBtn.textContent=open?'💬 Comments':'💬 Hide';
+        if(!open&&!commSection.dataset.loaded) loadComments(lv.id,commSection);
       };
-      actions.append(rateDiv,likeBtn,playBtn);
-      card.append(rank,thumb,info,actions);
+      topRow.append(rank,thumb,info);
+      card.append(topRow,actions,commSection);
       list.appendChild(card);
     });
   }catch(e){list.innerHTML=`<div class="comm-empty">Failed to load.<br><small>${e.message}</small></div>`;}
 }
+
+async function loadComments(levelId,container){
+  container.dataset.loaded='1';
+  container.innerHTML='<div style="color:rgba(255,255,255,0.3);font-size:12px">Loading comments…</div>';
+  try{
+    const comments=await sbFetch(`bf_comments?level_id=eq.${encodeURIComponent(levelId)}&order=created_at.asc&limit=30`);
+    container.innerHTML='';
+    if(comments&&comments.length){
+      comments.forEach(c=>{
+        const row=document.createElement('div');
+        row.className='comm-comment';
+        const ts=c.created_at?new Date(c.created_at).getTime():0;
+        row.innerHTML=`<span class="comm-comment-author">${escHtml(c.username)}</span><span class="comm-comment-text">${escHtml(c.body)}</span><span class="comm-comment-time">${timeAgo(ts)}</span>`;
+        container.appendChild(row);
+      });
+    } else {
+      container.innerHTML='<div style="color:rgba(255,255,255,0.2);font-size:12px;padding:4px 0">No comments yet. Be the first!</div>';
+    }
+    if(currentUser&&!currentUser.isGuest){
+      const form=document.createElement('div');
+      form.className='comm-comment-form';
+      const inp=document.createElement('input');
+      inp.className='comm-comment-input';inp.placeholder='Add a comment…';inp.maxLength=200;
+      const btn=document.createElement('button');
+      btn.className='comm-comment-btn';btn.textContent='Send';
+      btn.onclick=async()=>{
+        const body=inp.value.trim();if(!body)return;
+        btn.disabled=true;inp.value='';
+        try{
+          await sbFetch('bf_comments',{method:'POST',prefer:'return=minimal',body:{level_id:levelId,username:currentUser.username,body}});
+          container.dataset.loaded='';loadComments(levelId,container);
+        }catch(e){btn.disabled=false;alert('Failed to post comment.');}
+      };
+      form.append(inp,btn);
+      container.appendChild(form);
+    }
+  }catch(e){container.innerHTML='<div style="color:rgba(255,69,0,0.6);font-size:12px">Failed to load comments.</div>';}
+}
+
+async function toggleFollow(author,btn){
+  if(!currentUser||currentUser.isGuest){alert('Log in to follow creators!');return;}
+  const isFollowing=btn.classList.contains('following');
+  btn.disabled=true;
+  try{
+    if(isFollowing){
+      await sbFetch(`bf_follows?follower=eq.${encodeURIComponent(currentUser.username)}&following=eq.${encodeURIComponent(author)}`,{method:'DELETE'});
+      btn.textContent='+ Follow';btn.classList.remove('following');
+    } else {
+      await sbFetch('bf_follows',{method:'POST',prefer:'return=minimal',body:{follower:currentUser.username,following:author}});
+      btn.textContent='✓ Following';btn.classList.add('following');
+    }
+    // Update all follow buttons for this author on the page
+    document.querySelectorAll(`#follow-${CSS.escape(author)}`).forEach(b=>{if(b!==btn){b.textContent=btn.textContent;b.classList.toggle('following',!isFollowing);}});
+  }catch(e){alert('Failed. Try again.');}
+  btn.disabled=false;
+}
+
+async function playLOTW(id){
+  try{
+    const res=await sbFetch(`bf_levels?id=eq.${encodeURIComponent(id)}&select=*`);
+    if(res&&res[0]){currentCommunityLevelId=res[0].id;showPlayLevel(res[0],false,null);}
+  }catch(e){alert('Failed to load Level of the Week.');}
+}
+
 
 async function rateLevel(lv,rating,ratedSet,rateDiv){
   if(!currentUser||currentUser.isGuest){alert('Log in to rate levels!');return;}
@@ -3530,8 +4119,340 @@ function timeAgo(ts){
   return Math.floor(diff/86400000)+'d ago';
 }
 
-// Boot
-tryRestoreSession();
+
+// =============================================
+// HATS
+// =============================================
+const HATS=[
+  {id:'none',    name:'No Hat',    price:0,    emoji:''},
+  {id:'crown',   name:'Crown',     price:500,  emoji:'👑'},
+  {id:'tophat',  name:'Top Hat',   price:800,  emoji:'🎩'},
+  {id:'cap',     name:'Cap',       price:600,  emoji:'🧢'},
+  {id:'wizard',  name:'Wizard Hat',price:2000, emoji:'🧙'},
+  {id:'cowboy',  name:'Cowboy',    price:1500, emoji:'🤠'},
+  {id:'knight',  name:'Helmet',    price:3000, emoji:'⛑'},
+  {id:'halo',    name:'Halo',      price:5000, emoji:'😇', secret:true},
+  {id:'skull',   name:'Skull',     price:8000, emoji:'💀', secret:true},
+];
+function showHats(){ showScreen('hats'); buildHatUI(); updateCoinDisplays(); }
+function buildHatUI(){
+  const s=getSave();
+  if(!s.ownedHats) s.ownedHats=['none'];
+  if(!s.equippedHat) s.equippedHat='none';
+  const grid=document.getElementById('hat-grid');
+  grid.innerHTML='';
+  document.getElementById('hats-coin-count').textContent=s.coins;
+  HATS.forEach(hat=>{
+    const owned=s.ownedHats.includes(hat.id);
+    const equipped=s.equippedHat===hat.id;
+    const card=document.createElement('div');
+    card.className='hat-card';
+    card.innerHTML=`<div class="hat-preview">${hat.emoji||'🚫'}</div>
+      <div class="hat-name">${hat.name}</div>
+      <div class="hat-price">${hat.price===0?'FREE':'🪙'+hat.price.toLocaleString()}</div>`;
+    const btn=document.createElement('button');
+    btn.className='hat-buy-btn'+(equipped?' equipped':owned?' owned':'');
+    btn.textContent=equipped?'✓ ON HEAD':owned?'WEAR':'BUY';
+    btn.onclick=()=>{
+      if(equipped){s.equippedHat='none';writeSave(s);buildHatUI();}
+      else if(owned){s.equippedHat=hat.id;writeSave(s);buildHatUI();}
+      else{
+        if(s.coins<hat.price){alert('Not enough coins!');return;}
+        s.coins-=hat.price;if(!s.ownedHats)s.ownedHats=['none'];
+        s.ownedHats.push(hat.id);s.equippedHat=hat.id;writeSave(s);updateCoinDisplays();buildHatUI();
+      }
+    };
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+function getEquippedHat(){
+  const s=getSave();
+  const id=s.equippedHat||'none';
+  return HATS.find(h=>h.id===id)||HATS[0];
+}
+
+// =============================================
+// COIN TRAILS
+// =============================================
+const TRAILS=[
+  {id:'none',  name:'No Trail',   price:0,    color:null},
+  {id:'gold',  name:'Gold Dust',  price:2000, color:'#ffd700'},
+  {id:'blue',  name:'Blue Spark', price:2000, color:'#4cc9f0'},
+  {id:'fire',  name:'Fire',       price:5000, color:'#ff4500'},
+  {id:'green', name:'Slime',      price:3000, color:'#06d6a0'},
+  {id:'purple',name:'Magic',      price:5000, color:'#9d4edd'},
+  {id:'rainbow',name:'Rainbow',   price:15000,color:'rainbow'},
+];
+let _trailHue=0;
+function spawnTrail(x,y){
+  const s=getSave();
+  const trail=TRAILS.find(t=>t.id===(s.equippedTrail||'none'));
+  if(!trail||!trail.color)return;
+  let color=trail.color;
+  if(color==='rainbow'){_trailHue=(_trailHue+15)%360;color=`hsl(${_trailHue},100%,60%)`;}
+  for(let i=0;i<3;i++){
+    G.particles.push({
+      x:x+(Math.random()-0.5)*8,y:y+(Math.random()-0.5)*8,
+      vx:(Math.random()-0.5)*1.5,vy:-Math.random()*1.5-0.5,
+      life:0.6+Math.random()*0.3,color,size:3+Math.random()*3,isTrail:true
+    });
+  }
+}
+// Patch drawParticles to handle trail particles
+const _origDrawParticles=window.drawParticles; // will be patched after definition
+
+function showTrailShop(){
+  const s=getSave();
+  if(!s.ownedTrails)s.ownedTrails=['none'];
+  if(!s.equippedTrail)s.equippedTrail='none';
+  const div=document.createElement('div');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:700;display:flex;align-items:center;justify-content:center;';
+  div.innerHTML=`<div style="background:#1a1a2e;border:4px solid var(--yellow);padding:30px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+    <h2 style="font-family:Boogaloo,cursive;font-size:28px;color:var(--yellow);margin-bottom:16px">💨 Coin Trails</h2>
+    ${TRAILS.map(t=>{
+      const owned=s.ownedTrails.includes(t.id);
+      const equipped=s.equippedTrail===t.id;
+      return `<div class="trail-option${equipped?' selected':''}" onclick="buyEquipTrail('${t.id}')">
+        <div style="width:20px;height:20px;border-radius:50%;background:${t.color==='rainbow'?'linear-gradient(135deg,red,yellow,green,blue)':t.color||'#333'}"></div>
+        <div style="flex:1;font-family:Boogaloo,cursive;font-size:17px;color:#fff">${t.name}</div>
+        <div style="font-family:Boogaloo,cursive;font-size:14px;color:var(--yellow)">${equipped?'✓ ON':owned?'WEAR':'🪙'+t.price.toLocaleString()}</div>
+      </div>`;
+    }).join('')}
+    <button onclick="this.closest('div[style]').remove()" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;margin-top:14px;width:100%">CLOSE</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+function buyEquipTrail(id){
+  const s=getSave();
+  if(!s.ownedTrails)s.ownedTrails=['none'];
+  const trail=TRAILS.find(t=>t.id===id);if(!trail)return;
+  if(!s.ownedTrails.includes(id)){
+    if(s.coins<trail.price){alert('Not enough coins!');return;}
+    s.coins-=trail.price;s.ownedTrails.push(id);
+  }
+  s.equippedTrail=id;writeSave(s);updateCoinDisplays();
+  document.querySelector('[onclick*="closest"]')?.closest('div[style]')?.remove();
+  showTrailShop();
+}
+
+// =============================================
+// UNDO / REDO
+// =============================================
+let _undoStack=[],_redoStack=[];
+const UNDO_LIMIT=50;
+function undoSnapshot(){
+  if(!G.grid)return;
+  _undoStack.push(G.grid.map(row=>row.map(t=>({...t}))));
+  if(_undoStack.length>UNDO_LIMIT)_undoStack.shift();
+  _redoStack=[];
+  updateUndoBtns();
+}
+function undoEdit(){
+  if(!_undoStack.length)return;
+  _redoStack.push(G.grid.map(row=>row.map(t=>({...t}))));
+  G.grid=_undoStack.pop();
+  updateUndoBtns();
+}
+function redoEdit(){
+  if(!_redoStack.length)return;
+  _undoStack.push(G.grid.map(row=>row.map(t=>({...t}))));
+  G.grid=_redoStack.pop();
+  updateUndoBtns();
+}
+function updateUndoBtns(){
+  const u=document.getElementById('tb-undo'),r=document.getElementById('tb-redo');
+  if(u)u.disabled=_undoStack.length===0;
+  if(r)r.disabled=_redoStack.length===0;
+}
+function clearUndoHistory(){ _undoStack=[];_redoStack=[];updateUndoBtns(); }
+
+// =============================================
+// REPLAY LAST LEVEL
+// =============================================
+let _lastLevelData=null,_lastLevelIsStory=false,_lastStoryNum=null;
+function replayLastLevel(){
+  if(!_lastLevelData)return;
+  if(_lastLevelIsStory) showPlayLevel(_lastLevelData,true,_lastStoryNum);
+  else showPlayLevel(_lastLevelData,true,null);
+}
+
+// =============================================
+// ENDLESS THEMED RUNS
+// =============================================
+function showEndlessThemePicker(){
+  const div=document.createElement('div');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:700;display:flex;align-items:center;justify-content:center;';
+  const WORLD_COLORS=['#52b788','#f4d35e','#90e0ef','#8338ec','#606c38','#e63946','#48cae4','#4cc9f0','#7209b7','#ffbe0b'];
+  const WORLD_NAMES=['Grasslands','Desert','Icy Peaks','Sky Fortress','Swamp','Volcanic','Crystal','Storm','Shadow','Endgame'];
+  div.innerHTML=`<div style="background:#1a1a2e;border:4px solid #06d6a0;padding:30px;max-width:480px;width:90%;">
+    <h2 style="font-family:Boogaloo,cursive;font-size:28px;color:#06d6a0;margin-bottom:12px">♾ ENDLESS MODE</h2>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px">Pick a world theme, or play all worlds!</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <button onclick="startEndlessWithTheme(null)" style="font-family:Boogaloo,cursive;font-size:16px;padding:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;">🌍 All Worlds</button>
+      ${WORLD_NAMES.map((n,i)=>`<button onclick="startEndlessWithTheme(${i})" style="font-family:Boogaloo,cursive;font-size:15px;padding:8px;background:rgba(255,255,255,0.05);border:2px solid ${WORLD_COLORS[i]}55;color:${WORLD_COLORS[i]};cursor:pointer;">${n}</button>`).join('')}
+    </div>
+    <button onclick="this.closest('div[style]').remove()" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;width:100%">CANCEL</button>
+  </div>`;
+  document.body.appendChild(div);
+}
+function startEndlessWithTheme(worldIdx){
+  document.querySelector('[onclick*="closest"]')?.closest('div[style]')?.remove();
+  endlessTheme=worldIdx;
+  startEndless();
+}
+
+// =============================================
+// ADMIN: LEVEL OF THE WEEK
+// =============================================
+async function adminSetLOTW(levelId,levelName,levelAuthor,levelGrid){
+  if(!isAdmin())return;
+  try{
+    const val=JSON.stringify({id:levelId,name:levelName,author:levelAuthor,grid:levelGrid});
+    await sbFetch('bf_meta',{method:'POST',prefer:'return=minimal,resolution=merge-duplicates',body:{key:'lotw',value:val}});
+    alert(`✅ "${levelName}" set as Level of the Week!`);
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// =============================================
+// BOSS LEVELS
+// =============================================
+function isBossLevel(levelNum){
+  for(const w of WORLDS){
+    for(const lv of w.levels){
+      if(lv.num===levelNum&&lv.boss)return true;
+    }
+  }
+  return false;
+}
+function updateBossHPBar(){
+  const bar=document.getElementById('boss-hp-bar');
+  const fill=document.getElementById('boss-bar-fill');
+  const label=document.getElementById('boss-name-label');
+  if(!bar)return;
+  if(G.bossEnemy&&!G.bossEnemy.dead){
+    bar.style.display='block';
+    const pct=Math.max(0,(G.bossEnemy.hp/G.bossEnemy.maxHp)*100);
+    if(fill)fill.style.width=pct+'%';
+    if(label)label.textContent=G.bossEnemy.name||'👿 BOSS';
+  } else {
+    bar.style.display='none';
+  }
+}
+
+// =============================================
+// HOOKS INTO EXISTING SYSTEMS
+// =============================================
+// Patch showPlayLevel / showBuild to save last level for replay
+const _origShowPlayLevel=showPlayLevel;
+window.showPlayLevel=function(lvlData,isStory,storyNum,...rest){
+  _lastLevelData=lvlData;_lastLevelIsStory=!!isStory;_lastStoryNum=storyNum||null;
+  return _origShowPlayLevel(lvlData,isStory,storyNum,...rest);
+};
+
+// endlessTheme is set by showEndlessThemePicker before calling startEndless
+
+// Patch menu's endless button to show picker
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.querySelector('[onclick="startEndless()"]');
+  if(btn){btn.removeAttribute('onclick');btn.addEventListener('click',()=>showEndlessThemePicker());}
+  // Init tag filter state
+  setCommunityTag('');
+  // Undo/redo keyboard shortcut
+  document.addEventListener('keydown',e=>{
+    if(G&&G.mode==='build'){
+      if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undoEdit();}
+      if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Z')){e.preventDefault();redoEdit();}
+    }
+  });
+});
+
+// Undo: snapshot on mousedown in build mode
+let _lastPaintSnapshot=null;
+document.addEventListener('mousedown',()=>{
+  if(G&&G.mode==='build'){
+    _lastPaintSnapshot=G.grid.map(row=>row.map(t=>({...t})));
+  }
+});
+
+// Trail and boss HP are now updated inside updatePlayer() directly
+
+// Add 💨 Trail button to shop screen
+const _shopInner=document.querySelector('.shop-inner');
+if(_shopInner){
+  const trailBtn=document.createElement('button');
+  trailBtn.style.cssText='font-family:Boogaloo,cursive;font-size:17px;padding:10px 24px;background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;margin:12px 20px;';
+  trailBtn.textContent='💨 Coin Trails →';
+  trailBtn.onclick=showTrailShop;
+  _shopInner.insertBefore(trailBtn,_shopInner.firstChild);
+}
+
+// Add "Replay" button to death overlay (patch drawMsgOverlay area via winTimer/deathTimer)
+// The replay button is added via a DOM overlay when player dies/wins with no lives
+// We add it to exitGame sequence instead
+const _origExitGame=exitGame;
+window.exitGame=function(){
+  _origExitGame();
+  // Show replay button on menu for 10s if there's a last level
+  if(_lastLevelData){
+    const existing=document.getElementById('replay-float-btn');
+    if(existing)existing.remove();
+    const btn=document.createElement('button');
+    btn.id='replay-float-btn';
+    btn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);font-family:Boogaloo,cursive;font-size:18px;padding:10px 28px;background:#8338ec;border:3px solid #b5179e;color:#fff;cursor:pointer;z-index:400;animation:fadeIn .3s;';
+    btn.textContent='↩ REPLAY LAST LEVEL';
+    btn.onclick=()=>{btn.remove();replayLastLevel();};
+    document.body.appendChild(btn);
+    setTimeout(()=>btn.remove(),10000);
+  }
+};
+
+// Follow buttons are shown inline in community cards - no additional profile patch needed
+
+// Admin LOTW integration: add to admin panel on load
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    if(isAdmin()){
+      const adminInner=document.getElementById('admin-inner');
+      if(adminInner){
+        const sec=document.createElement('div');
+        sec.className='admin-section';
+        sec.innerHTML=`<div class="admin-section-title">🏆 Level of the Week</div>
+          <div class="admin-row">
+            <select class="dialog-input" id="lotw-level-sel" style="font-size:15px;max-width:280px"></select>
+            <button class="admin-btn admin-btn-gold" onclick="adminSetLOTWFromSel()">SET AS LOTW</button>
+          </div>
+          <div class="admin-feedback" id="lotw-feedback"></div>`;
+        adminInner.appendChild(sec);
+        // Populate with community levels
+        sbFetch('bf_levels?select=id,name,author&order=likes.desc&limit=50').then(lvls=>{
+          const sel=document.getElementById('lotw-level-sel');
+          if(sel&&lvls)lvls.forEach(lv=>{const o=document.createElement('option');o.value=lv.id;o.dataset.name=lv.name;o.dataset.author=lv.author;o.textContent=`${lv.name} by ${lv.author}`;sel.appendChild(o);});
+        }).catch(()=>{});
+      }
+    }
+  },1000);
+});
+async function adminSetLOTWFromSel(){
+  const sel=document.getElementById('lotw-level-sel');
+  if(!sel||!sel.value)return;
+  const opt=sel.options[sel.selectedIndex];
+  try{
+    const lvl=await sbFetch(`bf_levels?id=eq.${encodeURIComponent(sel.value)}&select=*`);
+    if(lvl&&lvl[0])await adminSetLOTW(lvl[0].id,lvl[0].name,lvl[0].author,lvl[0].grid);
+    document.getElementById('lotw-feedback').textContent='✅ Set!';
+  }catch(e){document.getElementById('lotw-feedback').textContent='❌ '+e.message;}
+}
+
+// Update coin display for hats screen
+const _origUpdateCoinDisplays=updateCoinDisplays;
+window.updateCoinDisplays=function(){
+  _origUpdateCoinDisplays();
+  const el=document.getElementById('hats-coin-count');
+  if(el)el.textContent=getSave().coins;
+};
+
+
 </script>
 </body>
 </html>
