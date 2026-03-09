@@ -381,7 +381,7 @@ canvas{display:block;}
       <button class="menu-btn btn-shop" onclick="showShop()">🛒 SHOP</button>
       <button class="menu-btn" style="background:var(--orange);color:#fff;" onclick="showCommunity()">🌍 COMMUNITY</button>
       <button class="menu-btn" style="background:var(--pink);color:#fff;" onclick="showLeaderboard()">🏆 LEADERBOARD</button>
-      <button class="menu-btn" style="background:#06d6a0;color:#12121f;" onclick="startEndless()">♾ ENDLESS<span id="endless-best-badge" style="display:none;font-size:11px;opacity:0.8;display:block;margin-top:2px"></span></button>
+      <button class="menu-btn" style="background:#06d6a0;color:#12121f;" onclick="showEndlessThemePicker()">♾ ENDLESS<span id="endless-best-badge" style="display:none;font-size:11px;opacity:0.8;display:block;margin-top:2px"></span></button>
       <button class="menu-btn" style="background:#ffd700;color:#12121f;" onclick="showDaily()">📅 DAILY<span id="daily-status-badge" style="font-size:11px;opacity:0.8;display:block;margin-top:2px"></span></button>
       <button class="menu-btn" id="admin-menu-btn" style="background:#ff4500;color:#fff;display:none;" onclick="showAdmin()">👑 ADMIN</button>
     </div>
@@ -701,9 +701,12 @@ const WORLDS=[
 // =============================================
 // SCREEN NAV
 // =============================================
+function closeModal(id){ const el=document.getElementById(id); if(el) el.remove(); }
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
+  // Always clean up any lingering modal overlays when changing screens
+  ['endless-theme-modal','trail-shop-modal'].forEach(mid=>closeModal(mid));
 }
 function showMenu(){
   stopGame(); showScreen('menu'); updateCoinDisplays(); updateMenuUserBadge(); updateDailyBadge();
@@ -719,7 +722,10 @@ function showHats(){ showScreen('hats'); buildHatUI(); updateCoinDisplays(); }
 function showCommunity(){ showScreen('community'); updateCoinDisplays(); loadCommunityLevels(); }
 function showLeaderboard(){ showScreen('leaderboard'); updateCoinDisplays(); syncCoinsToLeaderboard().then(()=>loadLeaderboard()); }
 function showBuild(lvlData,isStory,storyNum){ showScreen('game'); requestAnimationFrame(()=>startGameEngine(lvlData,false,isStory,storyNum)); }
-function showPlayLevel(lvlData,isStory,storyNum){ showScreen('game'); requestAnimationFrame(()=>startGameEngine(lvlData,true,isStory,storyNum)); }
+function showPlayLevel(lvlData,isStory,storyNum){
+  _lastLevelData=lvlData; _lastLevelIsStory=!!isStory; _lastStoryNum=storyNum||null;
+  showScreen('game'); requestAnimationFrame(()=>startGameEngine(lvlData,true,isStory,storyNum));
+}
 
 // =============================================
 // ENDLESS MODE
@@ -1395,7 +1401,7 @@ function resizeCanvas(){
   if(area) area.style.height=canvas.height+'px';
 }
 
-function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless){
+function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless,isDaily){
   if(G.rafId) cancelAnimationFrame(G.rafId);
   initGameState();
   resizeCanvas();
@@ -1403,6 +1409,7 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless){
   G.isStoryMode=isStory;
   G.storyLevelNum=storyNum;
   G.isEndless=!!isEndless; // set AFTER initGameState so it isn't wiped
+  G.isDaily=!!isDaily;     // set AFTER initGameState so it isn't wiped
   if(isStory&&storyNum) G.worldTheme=Math.floor((storyNum-1)/5);
   if(G.isEndless) G.worldTheme=Math.min(9,Math.floor((endlessLevelNum-1)/3));
   // Track community play count at START of play (not just on win)
@@ -1452,7 +1459,24 @@ function stopGame(){
   const bar=document.getElementById('boss-hp-bar');
   if(bar) bar.style.display='none';
 }
-function exitGame(){ stopGame(); showMenu(); }
+function exitGame(){
+  stopGame();
+  // Clean up any lingering modals/overlays
+  ['endless-theme-modal','trail-shop-modal'].forEach(id=>closeModal(id));
+  showMenu();
+  // Show replay button for 10s
+  if(_lastLevelData){
+    const existing=document.getElementById('replay-float-btn');
+    if(existing)existing.remove();
+    const btn=document.createElement('button');
+    btn.id='replay-float-btn';
+    btn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);font-family:Boogaloo,cursive;font-size:18px;padding:10px 28px;background:#8338ec;border:3px solid #b5179e;color:#fff;cursor:pointer;z-index:400;animation:fadeIn .3s;';
+    btn.textContent='↩ REPLAY LAST LEVEL';
+    btn.onclick=()=>{btn.remove();replayLastLevel();};
+    document.body.appendChild(btn);
+    setTimeout(()=>{if(btn.parentNode)btn.remove();},10000);
+  }
+}
 
 // ---- PALETTE ----
 const COLORS=['#457b9d','#52b788','#e63946','#ffbe0b','#8338ec','#fb5607','#ff006e','#3a86ff','#06d6a0','#adb5bd','#2b2d42','#f72585'];
@@ -3470,16 +3494,14 @@ async function showDaily(){
 
 function startDailyChallenge(){
   const seed=getDailySeed();
-  // Pick a fun world theme based on day of week
-  const dow=new Date().getUTCDay(); // 0-6
+  const dow=new Date().getUTCDay();
   const worldIdx=dow%10;
   const lvlData=generateStoryLevel(seed, worldIdx, 6, false);
   lvlData.name=`📅 Daily ${getDailyDateStr()}`;
   G_daily={isDaily:true, dateStr:getDailyDateStr()};
   showScreen('game');
   requestAnimationFrame(()=>{
-    startGameEngine(lvlData,true,false,null,false);
-    G.isDaily=true;
+    startGameEngine(lvlData,true,false,null,false,true); // 6th param = isDaily
   });
 }
 
@@ -3501,8 +3523,7 @@ async function submitDailyScore(score){
     try{
       await sbFetch('bf_daily_scores',{
         method:'POST',
-        prefer:'resolution=merge-duplicates',
-        headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+        prefer:'resolution=merge-duplicates,return=minimal',
         body:{username:currentUser.username,date:dateStr,score},
       });
     }catch(e){console.warn('Daily score submit failed',e);}
@@ -4202,11 +4223,14 @@ function spawnTrail(x,y){
 // Patch drawParticles to handle trail particles
 const _origDrawParticles=window.drawParticles; // will be patched after definition
 
+// closeModal defined near top of script (before showScreen)
 function showTrailShop(){
+  closeModal('trail-shop-modal');
   const s=getSave();
   if(!s.ownedTrails)s.ownedTrails=['none'];
   if(!s.equippedTrail)s.equippedTrail='none';
   const div=document.createElement('div');
+  div.id='trail-shop-modal';
   div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:700;display:flex;align-items:center;justify-content:center;';
   div.innerHTML=`<div style="background:#1a1a2e;border:4px solid var(--yellow);padding:30px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
     <h2 style="font-family:Boogaloo,cursive;font-size:28px;color:var(--yellow);margin-bottom:16px">💨 Coin Trails</h2>
@@ -4219,7 +4243,7 @@ function showTrailShop(){
         <div style="font-family:Boogaloo,cursive;font-size:14px;color:var(--yellow)">${equipped?'✓ ON':owned?'WEAR':'🪙'+t.price.toLocaleString()}</div>
       </div>`;
     }).join('')}
-    <button onclick="this.closest('div[style]').remove()" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;margin-top:14px;width:100%">CLOSE</button>
+    <button onclick="closeModal('trail-shop-modal')" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;margin-top:14px;width:100%">CLOSE</button>
   </div>`;
   document.body.appendChild(div);
 }
@@ -4232,7 +4256,7 @@ function buyEquipTrail(id){
     s.coins-=trail.price;s.ownedTrails.push(id);
   }
   s.equippedTrail=id;writeSave(s);updateCoinDisplays();
-  document.querySelector('[onclick*="closest"]')?.closest('div[style]')?.remove();
+  closeModal('trail-shop-modal');
   showTrailShop();
 }
 
@@ -4281,7 +4305,9 @@ function replayLastLevel(){
 // ENDLESS THEMED RUNS
 // =============================================
 function showEndlessThemePicker(){
+  closeModal('endless-theme-modal');
   const div=document.createElement('div');
+  div.id='endless-theme-modal';
   div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:700;display:flex;align-items:center;justify-content:center;';
   const WORLD_COLORS=['#52b788','#f4d35e','#90e0ef','#8338ec','#606c38','#e63946','#48cae4','#4cc9f0','#7209b7','#ffbe0b'];
   const WORLD_NAMES=['Grasslands','Desert','Icy Peaks','Sky Fortress','Swamp','Volcanic','Crystal','Storm','Shadow','Endgame'];
@@ -4292,12 +4318,12 @@ function showEndlessThemePicker(){
       <button onclick="startEndlessWithTheme(null)" style="font-family:Boogaloo,cursive;font-size:16px;padding:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;">🌍 All Worlds</button>
       ${WORLD_NAMES.map((n,i)=>`<button onclick="startEndlessWithTheme(${i})" style="font-family:Boogaloo,cursive;font-size:15px;padding:8px;background:rgba(255,255,255,0.05);border:2px solid ${WORLD_COLORS[i]}55;color:${WORLD_COLORS[i]};cursor:pointer;">${n}</button>`).join('')}
     </div>
-    <button onclick="this.closest('div[style]').remove()" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;width:100%">CANCEL</button>
+    <button onclick="closeModal('endless-theme-modal')" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;width:100%">CANCEL</button>
   </div>`;
   document.body.appendChild(div);
 }
 function startEndlessWithTheme(worldIdx){
-  document.querySelector('[onclick*="closest"]')?.closest('div[style]')?.remove();
+  closeModal('endless-theme-modal');
   endlessTheme=worldIdx;
   startEndless();
 }
@@ -4343,19 +4369,12 @@ function updateBossHPBar(){
 // =============================================
 // HOOKS INTO EXISTING SYSTEMS
 // =============================================
-// Patch showPlayLevel / showBuild to save last level for replay
-const _origShowPlayLevel=showPlayLevel;
-window.showPlayLevel=function(lvlData,isStory,storyNum,...rest){
-  _lastLevelData=lvlData;_lastLevelIsStory=!!isStory;_lastStoryNum=storyNum||null;
-  return _origShowPlayLevel(lvlData,isStory,storyNum,...rest);
-};
+// _lastLevelData is set directly inside showPlayLevel (see showPlayLevel definition)
 
 // endlessTheme is set by showEndlessThemePicker before calling startEndless
 
 // Patch menu's endless button to show picker
 document.addEventListener('DOMContentLoaded',()=>{
-  const btn=document.querySelector('[onclick="startEndless()"]');
-  if(btn){btn.removeAttribute('onclick');btn.addEventListener('click',()=>showEndlessThemePicker());}
   // Init tag filter state
   setCommunityTag('');
   // Undo/redo keyboard shortcut
@@ -4387,25 +4406,7 @@ if(_shopInner){
   _shopInner.insertBefore(trailBtn,_shopInner.firstChild);
 }
 
-// Add "Replay" button to death overlay (patch drawMsgOverlay area via winTimer/deathTimer)
-// The replay button is added via a DOM overlay when player dies/wins with no lives
-// We add it to exitGame sequence instead
-const _origExitGame=exitGame;
-window.exitGame=function(){
-  _origExitGame();
-  // Show replay button on menu for 10s if there's a last level
-  if(_lastLevelData){
-    const existing=document.getElementById('replay-float-btn');
-    if(existing)existing.remove();
-    const btn=document.createElement('button');
-    btn.id='replay-float-btn';
-    btn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);font-family:Boogaloo,cursive;font-size:18px;padding:10px 28px;background:#8338ec;border:3px solid #b5179e;color:#fff;cursor:pointer;z-index:400;animation:fadeIn .3s;';
-    btn.textContent='↩ REPLAY LAST LEVEL';
-    btn.onclick=()=>{btn.remove();replayLastLevel();};
-    document.body.appendChild(btn);
-    setTimeout(()=>btn.remove(),10000);
-  }
-};
+// exitGame replay button is handled inside exitGame() directly above
 
 // Follow buttons are shown inline in community cards - no additional profile patch needed
 
