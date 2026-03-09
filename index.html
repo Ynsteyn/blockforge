@@ -400,10 +400,11 @@ canvas{display:block;}
   </div>
   <div class="admin-inner" id="admin-inner">
     <div class="admin-section">
-      <div class="admin-section-title">🪙 Give Coins to Everyone</div>
+      <div class="admin-section-title">🪙 Give Coins to a Player</div>
       <div class="admin-row">
-        <input class="dialog-input" id="admin-coins-amount" type="number" min="1" max="1000000" placeholder="Amount..." style="width:180px;font-size:18px">
-        <button class="admin-btn admin-btn-gold" onclick="adminGiveCoins()">GIVE TO ALL</button>
+        <input class="dialog-input" id="admin-coins-username" type="text" placeholder="Username..." style="width:180px;font-size:18px" maxlength="20">
+        <input class="dialog-input" id="admin-coins-amount" type="number" min="1" max="1000000" placeholder="Amount..." style="width:150px;font-size:18px">
+        <button class="admin-btn admin-btn-gold" onclick="adminGiveCoins()">GIVE COINS</button>
       </div>
       <div class="admin-feedback" id="admin-coins-feedback"></div>
     </div>
@@ -2482,28 +2483,24 @@ function showAdmin(){
 
 async function adminGiveCoins(){
   if(!isAdmin())return;
+  const target=document.getElementById('admin-coins-username').value.trim().toLowerCase();
   const amount=parseInt(document.getElementById('admin-coins-amount').value);
   const fb=document.getElementById('admin-coins-feedback');
+  if(!target){fb.textContent='Enter a username.';return;}
   if(!amount||amount<1){fb.textContent='Enter a valid amount.';return;}
   fb.textContent='Working...';
   try{
-    // Fetch all users
-    const users=await sbFetch('bf_users?select=username,coins');
-    if(!users||users.length===0){fb.textContent='No users found.';return;}
-    // Update each user
-    let done=0;
-    for(const u of users){
-      const newCoins=(u.coins||0)+amount;
-      await sbFetch(`bf_users?username=eq.${encodeURIComponent(u.username)}`,{method:'PATCH',prefer:'return=minimal',body:{coins:newCoins}});
-      done++;
-      fb.textContent=`Updating... ${done}/${users.length}`;
+    const users=await sbFetch(`bf_users?username=eq.${encodeURIComponent(target)}&select=username,coins`);
+    if(!users||users.length===0){fb.textContent=`❌ Player "${target}" not found.`;return;}
+    const newCoins=(users[0].coins||0)+amount;
+    await sbFetch(`bf_users?username=eq.${encodeURIComponent(target)}`,{method:'PATCH',prefer:'return=minimal',body:{coins:newCoins}});
+    fb.textContent=`✅ Gave ${amount.toLocaleString()} coins to ${target}! (now ${newCoins.toLocaleString()})`;
+    // If giving to self, update local save too
+    if(target===currentUser.username){
+      const s=getSave();s.coins=newCoins;writeSave(s);updateCoinDisplays();
     }
-    fb.textContent=`✅ Gave ${amount.toLocaleString()} coins to ${done} players!`;
-    // Also update local save
-    const s=getSave();
-    s.coins=(s.coins||0)+amount;
-    writeSave(s);
-    updateCoinDisplays();
+    document.getElementById('admin-coins-username').value='';
+    document.getElementById('admin-coins-amount').value='';
   }catch(e){fb.textContent='Error: '+e.message;}
 }
 
