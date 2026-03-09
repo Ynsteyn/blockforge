@@ -95,7 +95,8 @@ canvas{display:block;}
 #palette-row{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 .swatch{width:20px;height:20px;border:2px solid rgba(255,255,255,0.2);border-radius:3px;cursor:pointer;transition:transform .1s;}
 .swatch:hover,.swatch.active{transform:scale(1.3);border-color:#fff;}
-#tile-type-sel{font-family:'Boogaloo',cursive;font-size:13px;background:rgba(255,255,255,0.08);color:#fff;border:2px solid rgba(255,255,255,0.2);padding:3px 6px;cursor:pointer;max-width:160px;}
+#tile-type-sel{font-family:'Boogaloo',cursive;font-size:13px;background:#1a1a2e;color:#fff;border:2px solid rgba(255,255,255,0.3);padding:3px 6px;cursor:pointer;max-width:160px;}
+#tile-type-sel option{background:#1a1a2e;color:#fff;}
 #level-name-input{font-family:'Boogaloo',cursive;font-size:14px;background:rgba(255,255,255,0.08);color:#fff;border:2px solid rgba(255,255,255,0.2);padding:4px 8px;width:130px;}
 #level-name-input::placeholder{color:rgba(255,255,255,0.3);}
 #zoom-btns{display:flex;gap:4px;flex-shrink:0;}
@@ -2823,45 +2824,53 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     }
   }
 
+  // Physics limits: vx=4, jump vy=-11.5, gravity=0.48
+  // Max air time: ~48 frames → max horiz gap = 4 tiles (128px) without bounce
+  // Max rise: 3 tiles (96px) without bounce; 5 tiles (160px) with bounce (vy=-16)
+  // All layout modes MUST respect these limits to stay playable.
+  const MAX_GAP=4;   // tiles, hard cap for horizontal gaps
+  const MAX_RISE=3;  // tiles, hard cap for vertical rise without bounce pad
+
   if(layoutMode==='staircase'){
-    // Continuous staircase with multiple tiers — ascending & descending runs across full level
-    let cx=9, tierIdx=0, dir=1, cy=LEVEL_ROWS-4;
-    const tierH=[LEVEL_ROWS-4, LEVEL_ROWS-7, LEVEL_ROWS-10, LEVEL_ROWS-13];
+    // Ascending/descending staircases — each step rises max 2 rows, gap max 3 tiles
+    let cx=9, cy=LEVEL_ROWS-4;
+    const stepDir=r()<0.5?-1:1; // -1=going up, +1=going down
     while(cx<PLACE_LIMIT-4){
       const plen=Math.max(3,Math.min(4+Math.floor(r()*4), PLACE_LIMIT-cx-2));
-      cy=Math.max(4,Math.min(LEVEL_ROWS-4,tierH[tierIdx%4]));
       for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      // Sub-platform creates layered feel
-      if(r()<0.4&&cy+3<LEVEL_ROWS-2){const sub=Math.max(2,plen-1);for(let j=0;j<sub;j++) grid[cy+3][cx+j]={type:1,color:pc[0]};}
-      if(dir>0) grid[cy][cx]={type:6,color:'#3a86ff'};
-      else if(worldIdx>=3&&r()<0.3) grid[cy][cx]={type:8,color:'#fb5607'};
+      // Bounce pad when stepping up (helps with rises)
+      if(stepDir===-1&&r()<0.7) grid[cy][cx]={type:6,color:'#3a86ff'};
       decoratePlatform(cx,cy,plen,false,false);
-      if(worldIdx>=1) for(let lc=cx+plen;lc<cx+plen+1+Math.floor(r()*2)&&lc<PLACE_LIMIT;lc++)
+      // Gap: max 3 tiles so player can always jump across
+      const gap=1+Math.floor(r()*2); // 1-2 tiles, safe
+      if(worldIdx>=1) for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++)
         grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
-      cx+=plen+1+Math.floor(r()*2);
-      tierIdx+=dir; if(tierIdx>=3){dir=-1;}else if(tierIdx<=0){dir=1;}
+      cx+=plen+gap;
+      // Rise: max 2 rows up, max 3 rows down — always physically reachable
+      const rise=stepDir*(1+Math.floor(r()*2));
+      cy=Math.max(4,Math.min(LEVEL_ROWS-4, cy+rise));
     }
     bridgeToEnd(cx,cy);
     fillDeathFloor();
 
   } else if(layoutMode==='gauntlet'){
-    // Dense obstacle course — long hazard-packed platforms separated by 1-2 tile gaps
+    // Long hazard-packed platforms — height changes max 2 rows, gaps 1-2 tiles
     let cx=9, cy=LEVEL_ROWS-4;
     while(cx<PLACE_LIMIT-4){
-      const plen=Math.min(10+Math.floor(r()*8), PLACE_LIMIT-cx-2);
-      const dy=Math.floor(r()*6)-3; cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy));
+      const plen=Math.min(8+Math.floor(r()*8), PLACE_LIMIT-cx-2);
+      const dy=Math.floor(r()*5)-2; cy=Math.max(4,Math.min(LEVEL_ROWS-4,cy+dy)); // max ±2 row change
       for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
       for(let j=1;j<plen-1;j+=3){
         const roll=r();
-        if(roll<0.25)      grid[cy][cx+j]={type:2,color:'#ccc'};
-        else if(roll<0.45) grid[cy-1][cx+j]={type:4,color:pc[0]};
-        else if(roll<0.55) grid[cy-1][cx+j]={type:24,color:'#6d6875'};
+        if(roll<0.25&&cy<LEVEL_ROWS-2) grid[cy][cx+j]={type:2,color:'#ccc'};
+        else if(roll<0.45&&cy-1>=0) grid[cy-1][cx+j]={type:4,color:pc[0]};
+        else if(roll<0.55&&cy-1>=0) grid[cy-1][cx+j]={type:24,color:'#6d6875'};
       }
-      if(worldIdx>=5&&plen>=6) grid[cy-1][cx+Math.floor(plen/2)]={type:12,color:'#06d6a0'};
+      if(worldIdx>=5&&plen>=6&&cy-1>=0) grid[cy-1][cx+Math.floor(plen/2)]={type:12,color:'#06d6a0'};
       if(r()<0.35&&cy-1>=0) grid[cy-1][cx+plen-2]={type:23,color:TILE_COLORS[23]};
       if(r()<coinChance) for(let j=0;j<plen;j++) if(r()<0.3&&cy-1>=0&&cx+j<PLACE_LIMIT) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
       if(worldIdx>=4&&cy-4>=0) for(let j=2;j<plen-2;j+=5) if(r()<0.4) grid[cy-4][cx+j]={type:10,color:'#ff006e'};
-      const gap=1+Math.floor(r()*2);
+      const gap=1+Math.floor(r()*2); // 1-2 tile gap — always clearable
       for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
       cx+=plen+gap;
     }
@@ -2869,17 +2878,20 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     fillDeathFloor();
 
   } else if(layoutMode==='islands'){
-    // Three height tiers with floating islands — wide gaps, bounce pads everywhere
-    const tiers=[LEVEL_ROWS-4, LEVEL_ROWS-8, LEVEL_ROWS-12];
+    // Floating islands — 2 tiers only (4 row difference), bounce pads mandatory
+    // Max height between tiers: 4 rows = 128px. Bounce pad (vy=-16) clears ~5 tiles rise.
+    const tiers=[LEVEL_ROWS-4, LEVEL_ROWS-8]; // only 2 tiers, 4 rows apart — safe with bounce
     let cx=9, tierIdx=0, cy=tiers[0];
     while(cx<PLACE_LIMIT-4){
-      cy=tiers[tierIdx%3];
-      const plen=Math.max(3,Math.min(5+Math.floor(r()*4), PLACE_LIMIT-cx-2));
+      cy=tiers[tierIdx%2];
+      const plen=Math.max(4,Math.min(5+Math.floor(r()*4), PLACE_LIMIT-cx-2));
       for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      grid[cy][cx]={type:6,color:'#3a86ff'}; // every island has a bounce pad
-      if(r()<0.4&&cy+4<LEVEL_ROWS-2) for(let j=0;j<plen;j++) grid[cy+4][cx+j]={type:15,color:pc[0]};
+      grid[cy][cx]={type:6,color:'#3a86ff'}; // bounce pad on every island — required for high islands
+      // One-way platform below as safety net on low tier
+      if(cy===tiers[0]&&r()<0.4&&cy+3<LEVEL_ROWS-2)
+        for(let j=0;j<plen;j++) grid[cy+3][cx+j]={type:15,color:pc[0]};
       decoratePlatform(cx,cy,plen,false,false);
-      const gap=3+Math.floor(r()*3);
+      const gap=2+Math.floor(r()*2); // 2-3 tile gap — safe horizontal jump
       for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:7,color:'#e63946'};
       cx+=plen+gap; tierIdx++;
     }
@@ -2887,47 +2899,53 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     fillDeathFloor();
 
   } else if(layoutMode==='cavern'){
-    // Enclosed cave — ceiling blocks narrow passages, multiple floor levels
+    // Enclosed cave — ceiling at least 5 rows above floor platform, max 2 row height change
     let cx=9, cy=LEVEL_ROWS-4;
     while(cx<PLACE_LIMIT-4){
       const plen=Math.max(4,Math.min(7+Math.floor(r()*6), PLACE_LIMIT-cx-2));
-      const dy=Math.floor(r()*5)-2; cy=Math.max(5,Math.min(LEVEL_ROWS-5,cy+dy));
+      const dy=Math.floor(r()*3)-1; cy=Math.max(6,Math.min(LEVEL_ROWS-4,cy+dy)); // max ±1 row
       for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      const ceilRow=Math.max(1,cy-6);
-      for(let j=0;j<plen;j++) if(r()<0.55) grid[ceilRow][cx+j]={type:1,color:pc[0]};
-      for(let j=1;j<plen-1;j++) if(r()<0.30) grid[ceilRow+1][cx+j]={type:2,color:'#888'};
-      if(worldIdx>=3&&r()<0.4) grid[Math.max(1,cy-3)][cx+Math.floor(plen/2)]={type:10,color:'#ff006e'};
-      if(r()<0.5&&cy-3>=1){const mid=Math.max(2,plen-2);for(let j=1;j<mid;j++) grid[cy-3][cx+j]={type:15,color:pc[0]};}
-      if(worldIdx>=2&&r()<0.5) grid[cy-1][cx+1]={type:24,color:'#6d6875'};
+      // Ceiling 5 rows above platform — ensures 4 clear rows for player (30px tall)
+      const ceilRow=Math.max(0,cy-5);
+      for(let j=0;j<plen;j++) if(r()<0.5) grid[ceilRow][cx+j]={type:1,color:pc[0]};
+      // Stalactites on second row — skip 1 tile each side so passage exists
+      for(let j=2;j<plen-2;j++) if(r()<0.25&&ceilRow+1<cy-2) grid[ceilRow+1][cx+j]={type:2,color:'#888'};
+      if(worldIdx>=3&&r()<0.4&&cy-3>=ceilRow+2) grid[cy-3][cx+Math.floor(plen/2)]={type:10,color:'#ff006e'};
+      // One-way mid-platform — only if there's clearance (at least 3 rows gap)
+      if(r()<0.4&&cy-3>=ceilRow+2){const mid=Math.max(2,plen-2);for(let j=1;j<mid;j++) grid[cy-3][cx+j]={type:15,color:pc[0]};}
+      if(worldIdx>=2&&r()<0.5&&cy-1>=0) grid[cy-1][cx+1]={type:24,color:'#6d6875'};
       decoratePlatform(cx,cy,plen,false,false);
-      cx+=plen+1+Math.floor(r()*2);
+      cx+=plen+1+Math.floor(r()*2); // 1-2 tile gap
     }
     bridgeToEnd(cx,cy);
     fillDeathFloor();
 
   } else if(layoutMode==='zigzag'){
-    // Strict high-low alternation — consistent big height changes, teleporters as shortcuts
+    // High-low alternation — height diff max 4 rows (128px), bridged by bounce pad
+    // From low platform player uses bounce pad to reach high platform
     let cx=9, cy=LEVEL_ROWS-5;
-    const rows=[LEVEL_ROWS-12, LEVEL_ROWS-5];
-    let hi=Math.floor(r()*2);
+    const lowRow=LEVEL_ROWS-4;
+    const highRow=Math.max(4, LEVEL_ROWS-8); // only 4 rows above low — safe with bounce
+    let goHigh=r()<0.5;
     while(cx<PLACE_LIMIT-4){
-      cy=Math.max(4,rows[hi%2]);
-      const plen=Math.max(4,Math.min(7+Math.floor(r()*4), PLACE_LIMIT-cx-2));
+      cy=goHigh?highRow:lowRow;
+      const plen=Math.max(5,Math.min(7+Math.floor(r()*4), PLACE_LIMIT-cx-2));
       for(let j=0;j<plen;j++) grid[cy][cx+j]={type:1,color:pc[Math.floor(r()*pc.length)]};
-      if(hi%2===0) grid[cy][cx]={type:6,color:'#3a86ff'};
-      if(worldIdx>=3&&r()<0.3&&cx+plen+4<PLACE_LIMIT){
-        if(cy-1>=0) grid[cy-1][cx+Math.floor(plen/2)]={type:17,color:'#c77dff'};
-        const pairC=cx+plen+3,pairRow=Math.max(4,rows[(hi+1)%2]);
+      // Bounce pad on LOW platform to reach the HIGH one
+      if(!goHigh) grid[cy][cx+Math.floor(plen/2)]={type:6,color:'#3a86ff'};
+      // Arrow block on high platform to build horizontal momentum
+      else if(worldIdx>=3) grid[cy][cx]={type:8,color:'#fb5607'};
+      decoratePlatform(cx,cy,plen,false,false);
+      // Teleporter shortcut (world 3+)
+      if(worldIdx>=3&&r()<0.3&&cx+plen+4<PLACE_LIMIT&&cy-1>=0){
+        grid[cy-1][cx+Math.floor(plen/2)]={type:17,color:'#c77dff'};
+        const pairC=cx+plen+3, pairRow=goHigh?lowRow:highRow;
         if(pairRow-1>=0&&pairC<PLACE_LIMIT) grid[pairRow-1][pairC]={type:18,color:'#7b2d8b'};
       }
-      if(r()<coinChance){
-        const midX=cx+plen+2, midY=Math.floor((rows[0]+rows[1])/2);
-        if(midX<PLACE_LIMIT&&midY>=1) grid[midY][midX]={type:3,color:'#ffbe0b'};
-      }
-      decoratePlatform(cx,cy,plen,false,false);
-      const gap=2+Math.floor(r()*3);
+      if(r()<coinChance&&cy-1>=0) for(let j=1;j<plen-1;j++) if(r()<0.4) grid[cy-1][cx+j]={type:3,color:'#ffbe0b'};
+      const gap=2+Math.floor(r()*2); // 2-3 tiles, safe horizontal jump
       for(let lc=cx+plen;lc<cx+plen+gap&&lc<PLACE_LIMIT;lc++) grid[LEVEL_ROWS-1][lc]={type:worldIdx===5?7:2,color:'#e63946'};
-      cx+=plen+gap; hi++;
+      cx+=plen+gap; goHigh=!goHigh;
     }
     bridgeToEnd(cx,cy);
     fillDeathFloor();
