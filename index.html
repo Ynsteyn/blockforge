@@ -512,6 +512,7 @@ canvas{display:block;}
     <div class="tb-sep"></div>
     <button class="tb-btn tb-mode" id="mode-toggle-btn" onclick="toggleGameMode()">▶ PLAY</button>
     <button class="tb-btn tb-save" id="save-btn" onclick="openSaveDialog()">💾 SAVE</button>
+    <button class="tb-btn" id="save-story-btn" onclick="saveStoryOverride()" style="display:none;background:#ff4500;color:#fff;">👑 SAVE AS STORY LV</button>
     <button class="tb-btn tb-clear" id="tb-clear" onclick="clearLevel()">🗑 CLEAR</button>
     <button class="undo-btn" id="tb-undo" onclick="undoEdit()" title="Undo (Ctrl+Z)" disabled>↩</button>
     <button class="undo-btn" id="tb-redo" onclick="redoEdit()" title="Redo (Ctrl+Y)" disabled>↪</button>
@@ -608,6 +609,7 @@ canvas{display:block;}
       <button class="admin-tab active" onclick="adminTab('tools')" id="atab-tools">🔧 Tools</button>
       <button class="admin-tab" onclick="adminTab('players')" id="atab-players">👥 Players</button>
       <button class="admin-tab" onclick="adminTab('levels')" id="atab-levels">🗺 Levels</button>
+      <button class="admin-tab" onclick="adminTab('story')" id="atab-story">✏️ Story</button>
       <button class="admin-tab" onclick="adminTab('stats')" id="atab-stats">📊 Stats</button>
     </div>
 
@@ -656,6 +658,12 @@ canvas{display:block;}
         <button class="admin-btn admin-btn-gold" onclick="adminLoadLevels()" style="font-size:15px;padding:7px 16px;">↻ Refresh</button>
       </div>
       <div id="admin-levels-list"><div class="comm-loading">Loading levels…</div></div>
+    </div>
+
+    <!-- STORY EDIT TAB -->
+    <div class="admin-tab-pane" id="apane-story">
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:8px;">Click ✏️ to edit a story level. Changes are saved locally in this browser. Use 🔄 to reset a level back to its generated default.</div>
+      <div id="admin-story-list"></div>
     </div>
 
     <!-- STATS TAB -->
@@ -1678,13 +1686,16 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless,isDaily){
   const modeBtn=document.getElementById('mode-toggle-btn');
   if(playOnly){
     G.mode='play';
-    ['save-btn','tile-type-sel','palette-row','level-name-input','zoom-btns','mode-toggle-btn','tb-clear'].forEach(id=>{
+    ['save-btn','tile-type-sel','palette-row','level-name-input','zoom-btns','mode-toggle-btn','tb-clear','save-story-btn'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.style.display='none';
     });
   } else {
     ['save-btn','tile-type-sel','palette-row','level-name-input','zoom-btns','mode-toggle-btn','tb-clear'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.style.display='';
     });
+    // save-story-btn only shown when adminEditStoryLevel opens build mode
+    const ssb=document.getElementById('save-story-btn');
+    if(ssb) ssb.style.display='none';
   }
 
   if(lvlData&&lvlData.grid){
@@ -1722,6 +1733,11 @@ function stopGame(){
 }
 function exitGame(){
   stopGame();
+  // Reset admin story-edit button state
+  const ssb=document.getElementById('save-story-btn');
+  const sb=document.getElementById('save-btn');
+  if(ssb) ssb.style.display='none';
+  if(sb) sb.style.display='';
   // Clean up any lingering modals/overlays
   ['endless-theme-modal','trail-shop-modal'].forEach(id=>closeModal(id));
   showMenu();
@@ -3313,6 +3329,15 @@ function clearLevel(){ if(confirm('Clear the entire level?')){G.grid=createGrid(
 // STORY LEVEL GENERATOR (65 levels, 13 worlds)
 // =============================================
 function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless, forceLayout){
+  // Admin story overrides take priority (only apply in non-endless story mode)
+  if(!isEndless){
+    const override=getStoryOverride(num);
+    if(override){
+      const allLvls=WORLDS.flatMap(w=>w.levels);
+      const meta=allLvls.find(l=>l.num===num);
+      return {grid:override.map(row=>row.map(t=>({...t}))),name:meta?meta.name:`Level ${num}`};
+    }
+  }
   const grid=createGrid();
   const rng=seed=>{let s=seed;return()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/0xffffffff;};};
   const r=rng(num*31337);
@@ -4429,6 +4454,96 @@ function renderLbList(elId,users,valFn,clickable){
 }
 
 // =============================================
+// STORY LEVEL OVERRIDES (admin edits)
+// =============================================
+function getStoryOverride(num){
+  try{ const v=localStorage.getItem('bf_story_override_'+num); return v?JSON.parse(v):null; }catch(e){return null;}
+}
+function setStoryOverride(num,grid){
+  try{ localStorage.setItem('bf_story_override_'+num,JSON.stringify(grid)); }catch(e){alert('Save failed: '+e.message);}
+}
+function clearStoryOverride(num){
+  localStorage.removeItem('bf_story_override_'+num);
+}
+function hasStoryOverride(num){
+  return localStorage.getItem('bf_story_override_'+num)!==null;
+}
+
+function adminEditStoryLevel(num){
+  if(!isAdmin())return;
+  // Generate the base level, then apply override if exists
+  const lvlData=generateStoryLevel(num);
+  const override=getStoryOverride(num);
+  if(override) lvlData.grid=override;
+  // Find the level name from WORLDS
+  const allLvls=WORLDS.flatMap(w=>w.levels);
+  const meta=allLvls.find(l=>l.num===num);
+  lvlData.name=(meta?meta.name:`Level ${num}`)+' [ADMIN EDIT]';
+  // Open in build mode with isStory flag so save knows which level
+  showScreen('game');
+  requestAnimationFrame(()=>{
+    startGameEngine(lvlData,false,true,num);
+    // Show the story-save button, hide the regular save button
+    const ssb=document.getElementById('save-story-btn');
+    const sb=document.getElementById('save-btn');
+    if(ssb) ssb.style.display='';
+    if(sb) sb.style.display='none';
+    document.getElementById('level-name-input').value=lvlData.name;
+  });
+}
+
+function saveStoryOverride(){
+  if(!isAdmin())return;
+  const num=G.storyLevelNum;
+  if(!num){alert('Not editing a story level.');return;}
+  setStoryOverride(num,G.grid.map(row=>row.map(t=>({...t}))));
+  const btn=document.getElementById('save-story-btn');
+  btn.textContent='✅ SAVED!';
+  setTimeout(()=>{btn.textContent='👑 SAVE AS STORY LV';},1600);
+}
+
+function resetStoryOverride(num){
+  if(!confirm(`Reset level ${num} back to its generated default? Custom edits will be lost.`))return;
+  clearStoryOverride(num);
+  // Re-render the story list to update the badge
+  renderAdminStoryList();
+}
+
+function renderAdminStoryList(){
+  const container=document.getElementById('admin-story-list');
+  if(!container)return;
+  container.innerHTML='';
+  WORLDS.forEach(world=>{
+    const worldDiv=document.createElement('div');
+    worldDiv.style.cssText='margin-bottom:18px;';
+    const title=document.createElement('div');
+    title.style.cssText=`font-family:Boogaloo,cursive;font-size:16px;color:${world.color};margin-bottom:8px;padding:4px 0;border-bottom:2px solid ${world.color}44;`;
+    title.textContent=world.name;
+    worldDiv.appendChild(title);
+    world.levels.forEach(lv=>{
+      const hasEdit=hasStoryOverride(lv.num);
+      const row=document.createElement('div');
+      row.className='admin-level-row';
+      row.style.marginBottom='5px';
+      row.innerHTML=`
+        <div style="flex:1;min-width:0">
+          <div class="admin-level-name" style="font-size:14px">
+            Lv.${lv.num} — ${escHtml(lv.name)}
+            ${hasEdit?'<span style="font-size:11px;background:#ff4500;color:#fff;padding:1px 6px;margin-left:6px;font-family:Boogaloo,cursive">EDITED</span>':''}
+          </div>
+          <div class="admin-level-meta">⭐ Diff ${lv.diff}${lv.boss?' · 👿 BOSS':''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="admin-del-btn" style="background:#4361ee" onclick="adminEditStoryLevel(${lv.num})">✏️ EDIT</button>
+          ${hasEdit?`<button class="admin-del-btn" style="background:#555" onclick="resetStoryOverride(${lv.num})">🔄 RESET</button>`:''}
+        </div>`;
+      worldDiv.appendChild(row);
+    });
+    container.appendChild(worldDiv);
+  });
+}
+
+// =============================================
 // ADMIN
 // =============================================
 let _adminAllPlayers=[];
@@ -4441,13 +4556,14 @@ function showAdmin(){
 }
 
 function adminTab(tab){
-  ['tools','players','levels','stats'].forEach(t=>{
+  ['tools','players','levels','story','stats'].forEach(t=>{
     document.getElementById('atab-'+t)?.classList.toggle('active',t===tab);
     document.getElementById('apane-'+t)?.classList.toggle('active',t===tab);
   });
   if(tab==='tools')   buildAdminLOTW();
   if(tab==='players') adminLoadPlayers();
   if(tab==='levels')  adminLoadLevels();
+  if(tab==='story')   renderAdminStoryList();
   if(tab==='stats')   adminLoadStats();
 }
 
