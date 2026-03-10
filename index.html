@@ -739,6 +739,7 @@ function showPlayLevel(lvlData,isStory,storyNum){
 // =============================================
 let endlessLevelNum=1;
 let endlessTotalCoins=0;
+let endlessTotalScore=0;
 let endlessBestScore=0;
 let endlessRunSeed=1; // unique per run so every playthrough gives different levels
 let endlessTheme=null; // null = all worlds, 0-9 = specific world theme
@@ -748,6 +749,7 @@ function startEndless(){
   const s=getSave();
   endlessLevelNum=1;
   endlessTotalCoins=0;
+  endlessTotalScore=0;
   endlessBestScore=s.endlessBest||0;
   endlessRunSeed=Math.floor(Math.random()*999983)+1; // new seed every run
   showEndlessLevel();
@@ -767,6 +769,7 @@ function showEndlessLevel(){
 function advanceEndless(){
   endlessLevelNum++;
   endlessTotalCoins+=G.coinsCollected;
+  endlessTotalScore=(endlessTotalScore||0)+G.score; // carry score across levels
   showEndlessLevel();
 }
 
@@ -1612,8 +1615,10 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless,isDaily){
   G.isPlayOnly=playOnly;
   G.isStoryMode=isStory;
   G.storyLevelNum=storyNum;
-  G.isEndless=!!isEndless; // set AFTER initGameState so it isn't wiped
-  G.isDaily=!!isDaily;     // set AFTER initGameState so it isn't wiped
+  G.isEndless=!!isEndless;
+  G.isDaily=!!isDaily;
+  // Restore accumulated score for endless (initGameState wipes G.score to 0)
+  if(isEndless && endlessTotalScore>0) G.score=endlessTotalScore;
   if(isStory&&storyNum) G.worldTheme=Math.floor((storyNum-1)/5);
   if(G.isEndless) G.worldTheme=Math.min(9,Math.floor((endlessLevelNum-1)/3));
   // Track community play count at START of play (not just on win)
@@ -2059,12 +2064,18 @@ function updatePlayer(){
   }
   // Goal
   if(pmid>=0&&pmid<LEVEL_ROWS&&G.grid[pmid]&&G.grid[pmid][pc]&&G.grid[pmid][pc].type===5) winPlayer();
-  // Door — open if player has key and any corner touches door tile
+  // Door — open if player has key and is standing adjacent to a door tile
   if(!G.doorOpen&&G.hasKey){
-    const _dcorners=[[Math.floor(p.y/TILE),Math.floor(p.x/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor(p.x/TILE)],[Math.floor(p.y/TILE),Math.floor((p.x+p.w-1)/TILE)],[Math.floor((p.y+p.h-1)/TILE),Math.floor((p.x+p.w-1)/TILE)],[pmid,pc]];
-    for(const [dr,dc] of _dcorners){
-      if(dr>=0&&dr<LEVEL_ROWS&&dc>=0&&dc<LEVEL_COLS&&G.grid[dr]&&G.grid[dr][dc]&&G.grid[dr][dc].type===20){
-        G.doorOpen=true;spawnParticles(p.x+p.w/2,p.y,'#ffd60a',20);break;
+    // Check a 1-tile radius around the player for any door tile
+    const r0=Math.floor(p.y/TILE)-1, r1=Math.floor((p.y+p.h)/TILE)+1;
+    const c0=Math.floor(p.x/TILE)-1,  c1=Math.floor((p.x+p.w)/TILE)+1;
+    outer_door:for(let dr=r0;dr<=r1;dr++) for(let dc=c0;dc<=c1;dc++){
+      if(dr<0||dr>=LEVEL_ROWS||dc<0||dc>=LEVEL_COLS)continue;
+      if(G.grid[dr]&&G.grid[dr][dc]&&G.grid[dr][dc].type===20){
+        G.doorOpen=true;
+        spawnParticles((dc+0.5)*TILE,(dr+0.5)*TILE,'#ffd60a',20);
+        updatePowerupHUD();
+        break outer_door;
       }
     }
   }
