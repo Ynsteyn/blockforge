@@ -735,6 +735,7 @@ let endlessTotalCoins=0;
 let endlessBestScore=0;
 let endlessRunSeed=1; // unique per run so every playthrough gives different levels
 let endlessTheme=null; // null = all worlds, 0-9 = specific world theme
+let endlessForceLayout=null; // null = random, or a layout mode string
 
 function startEndless(){
   const s=getSave();
@@ -748,13 +749,12 @@ function startEndless(){
 function showEndlessLevel(){
   const difficulty=Math.min(10,1+Math.floor((endlessLevelNum-1)*0.35));
   const worldIdx=endlessTheme!==null?endlessTheme:Math.min(9,Math.floor((endlessLevelNum-1)/3));
-  // Combine run seed + level number so each level is unique AND changes every run
   const levelSeed=endlessRunSeed*1000+endlessLevelNum;
-  const lvlData=generateStoryLevel(levelSeed, worldIdx, difficulty, true); // true = endless (fewer coins)
+  const lvlData=generateStoryLevel(levelSeed, worldIdx, difficulty, true, endlessForceLayout);
   const modeLabels={staircase:'🪜 Staircase',gauntlet:'⚔ Gauntlet',islands:'🏝 Islands',cavern:'🦇 Cavern',zigzag:'⚡ Zigzag',multilevel:'🏗 Multi-Tier',lava_run:'🔥 Lava Run',checkerboard:'♟ Checker',sprint:'💨 Sprint',tower:'🏀 Bounce Rush',standard:'🏃 Run'};
   lvlData.name=`♾ #${endlessLevelNum} — ${modeLabels[lvlData.layoutMode]||'Run'}`;
   showScreen('game');
-  requestAnimationFrame(()=>startGameEngine(lvlData,true,false,null,true)); // last param = isEndless
+  requestAnimationFrame(()=>startGameEngine(lvlData,true,false,null,true));
 }
 
 function advanceEndless(){
@@ -3056,7 +3056,7 @@ function clearLevel(){ if(confirm('Clear the entire level?')){G.grid=createGrid(
 // =============================================
 // STORY LEVEL GENERATOR (65 levels, 13 worlds)
 // =============================================
-function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless){
+function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless, forceLayout){
   const grid=createGrid();
   const rng=seed=>{let s=seed;return()=>{s=(s*1664525+1013904223)&0xffffffff;return(s>>>0)/0xffffffff;};};
   const r=rng(num*31337);
@@ -3075,9 +3075,9 @@ function generateStoryLevel(num, overrideWorldIdx, overrideDifficulty, isEndless
     num<=50?Math.min(10,Math.floor((num-1)/5)*2+((num-1)%5)+1):
     10+Math.floor((num-51)/5); // 11-14 for secret worlds
 
-  // Pick a layout mode — endless gets varied modes, story uses standard
+  // Pick a layout mode — endless gets varied modes (or forced), story uses standard
   const LAYOUT_MODES=['staircase','gauntlet','islands','cavern','zigzag','multilevel','lava_run','checkerboard','sprint','tower'];
-  const layoutMode=isEndless?LAYOUT_MODES[Math.floor(r()*LAYOUT_MODES.length)]:'standard';
+  const layoutMode=isEndless?(forceLayout||LAYOUT_MODES[Math.floor(r()*LAYOUT_MODES.length)]):'standard';
 
   for(let c=6;c<LEVEL_COLS-7;c++){grid[LEVEL_ROWS-1][c].type=0;grid[LEVEL_ROWS-2][c].type=0;}
   for(let c=0;c<9;c++){grid[LEVEL_ROWS-1][c]={type:1,color:pc[0]};grid[LEVEL_ROWS-2][c]={type:1,color:pc[0]};}
@@ -4482,23 +4482,58 @@ function showEndlessThemePicker(){
   closeModal('endless-theme-modal');
   const div=document.createElement('div');
   div.id='endless-theme-modal';
-  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:700;display:flex;align-items:center;justify-content:center;';
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:700;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;';
   const WORLD_COLORS=['#52b788','#f4d35e','#90e0ef','#8338ec','#606c38','#e63946','#48cae4','#4cc9f0','#7209b7','#ffbe0b'];
   const WORLD_NAMES=['Grasslands','Desert','Icy Peaks','Sky Fortress','Swamp','Volcanic','Crystal','Storm','Shadow','Endgame'];
-  div.innerHTML=`<div style="background:#1a1a2e;border:4px solid #06d6a0;padding:30px;max-width:480px;width:90%;">
-    <h2 style="font-family:Boogaloo,cursive;font-size:28px;color:#06d6a0;margin-bottom:12px">♾ ENDLESS MODE</h2>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px">Pick a world theme, or play all worlds!</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <button onclick="startEndlessWithTheme(null)" style="font-family:Boogaloo,cursive;font-size:16px;padding:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);color:#fff;cursor:pointer;">🌍 All Worlds</button>
-      ${WORLD_NAMES.map((n,i)=>`<button onclick="startEndlessWithTheme(${i})" style="font-family:Boogaloo,cursive;font-size:15px;padding:8px;background:rgba(255,255,255,0.05);border:2px solid ${WORLD_COLORS[i]}55;color:${WORLD_COLORS[i]};cursor:pointer;">${n}</button>`).join('')}
+  const LAYOUT_MODES=[
+    {id:null,      label:'🎲 Random Layout', color:'#aaa'},
+    {id:'staircase',   label:'🪜 Staircase',    color:'#52b788'},
+    {id:'gauntlet',    label:'⚔ Gauntlet',      color:'#e63946'},
+    {id:'islands',     label:'🏝 Islands',       color:'#4cc9f0'},
+    {id:'cavern',      label:'🦇 Cavern',        color:'#8338ec'},
+    {id:'zigzag',      label:'⚡ Zigzag',        color:'#ffbe0b'},
+    {id:'multilevel',  label:'🏗 Multi-Tier',    color:'#fb5607'},
+    {id:'lava_run',    label:'🔥 Lava Run',      color:'#e63946'},
+    {id:'checkerboard',label:'♟ Checkerboard',   color:'#c77dff'},
+    {id:'sprint',      label:'💨 Sprint',        color:'#06d6a0'},
+    {id:'tower',       label:'🏀 Bounce Rush',   color:'#3a86ff'},
+  ];
+  div.innerHTML=`<div style="background:#1a1a2e;border:4px solid #06d6a0;padding:28px;max-width:520px;width:92%;max-height:90vh;overflow-y:auto;">
+    <h2 style="font-family:Boogaloo,cursive;font-size:28px;color:#06d6a0;margin-bottom:6px">♾ ENDLESS MODE</h2>
+
+    <div style="font-family:Boogaloo,cursive;font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:14px">Choose a layout style:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:20px">
+      ${LAYOUT_MODES.map(m=>`<button onclick="startEndlessWithOptions(${m.id===null?'null':`'${m.id}'`}, _endlessPickedWorld)"
+        style="font-family:Boogaloo,cursive;font-size:14px;padding:9px 6px;background:rgba(255,255,255,0.05);border:2px solid ${m.color}55;color:${m.color};cursor:pointer;text-align:left;padding-left:10px;">${m.label}</button>`).join('')}
     </div>
+
+    <div style="font-family:Boogaloo,cursive;font-size:15px;color:rgba(255,255,255,0.5);margin-bottom:10px">Choose a world theme:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:18px">
+      <button onclick="_endlessPickedWorld=null;updateWorldBtns(this)" id="wb-all"
+        style="font-family:Boogaloo,cursive;font-size:14px;padding:8px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.5);color:#fff;cursor:pointer;">🌍 All Worlds ✓</button>
+      ${WORLD_NAMES.map((n,i)=>`<button onclick="_endlessPickedWorld=${i};updateWorldBtns(this)" id="wb-${i}"
+        style="font-family:Boogaloo,cursive;font-size:14px;padding:8px;background:rgba(255,255,255,0.04);border:2px solid ${WORLD_COLORS[i]}55;color:${WORLD_COLORS[i]};cursor:pointer;">${n}</button>`).join('')}
+    </div>
+
     <button onclick="closeModal('endless-theme-modal')" style="font-family:Boogaloo,cursive;font-size:18px;background:var(--red);color:#fff;border:none;padding:8px 24px;cursor:pointer;width:100%">CANCEL</button>
   </div>`;
   document.body.appendChild(div);
 }
-function startEndlessWithTheme(worldIdx){
+// Temp storage for world selection while modal is open
+let _endlessPickedWorld=null;
+function updateWorldBtns(clicked){
+  // Highlight selected world button
+  document.querySelectorAll('[id^="wb-"]').forEach(b=>{
+    const isSelected=(b===clicked);
+    b.style.fontWeight=isSelected?'bold':'normal';
+    b.style.opacity=isSelected?'1':'0.7';
+    b.textContent=b.textContent.replace(' ✓','')+(isSelected?' ✓':'');
+  });
+}
+function startEndlessWithOptions(layoutMode, worldIdx){
   closeModal('endless-theme-modal');
-  endlessTheme=worldIdx;
+  endlessTheme = worldIdx;
+  endlessForceLayout = layoutMode; // null = random
   startEndless();
 }
 
