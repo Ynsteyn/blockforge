@@ -285,9 +285,14 @@ canvas{display:block;}
 }
 /* Admin panel */
 #screen-admin{background:#0a0a1a;flex-direction:column;padding-top:60px;}
-.admin-inner{width:100%;max-width:760px;overflow-y:auto;max-height:calc(100vh-80px);padding:24px;display:flex;flex-direction:column;gap:28px;}
-.admin-section{background:rgba(255,255,255,0.04);border:2px solid rgba(255,69,0,0.3);padding:22px;display:flex;flex-direction:column;gap:14px;}
-.admin-section-title{font-family:'Boogaloo',cursive;font-size:22px;color:#ff6b35;}
+.admin-inner{width:100%;max-width:900px;overflow-y:auto;max-height:calc(100vh-80px);padding:20px;display:flex;flex-direction:column;gap:0;}
+.admin-tabs{display:flex;gap:0;margin-bottom:0;border-bottom:3px solid rgba(255,69,0,0.4);}
+.admin-tab{font-family:'Boogaloo',cursive;font-size:17px;padding:10px 22px;background:rgba(255,255,255,0.04);border:2px solid rgba(255,69,0,0.2);border-bottom:none;color:rgba(255,255,255,0.45);cursor:pointer;transition:all .12s;}
+.admin-tab.active{background:rgba(255,69,0,0.15);color:#ff6b35;border-color:rgba(255,69,0,0.6);}
+.admin-tab-pane{display:none;padding:20px;background:rgba(255,255,255,0.02);border:2px solid rgba(255,69,0,0.2);border-top:none;gap:22px;flex-direction:column;}
+.admin-tab-pane.active{display:flex;}
+.admin-section{background:rgba(255,255,255,0.04);border:2px solid rgba(255,69,0,0.3);padding:20px;display:flex;flex-direction:column;gap:14px;}
+.admin-section-title{font-family:'Boogaloo',cursive;font-size:20px;color:#ff6b35;}
 .admin-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .admin-btn{font-family:'Boogaloo',cursive;font-size:17px;padding:9px 22px;border:none;cursor:pointer;transition:opacity .12s;}
 .admin-btn:hover{opacity:.8;}
@@ -295,9 +300,13 @@ canvas{display:block;}
 .admin-btn-red{background:#e63946;color:#fff;}
 .admin-feedback{font-size:13px;color:rgba(255,255,255,0.5);min-height:18px;}
 .admin-level-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:8px 12px;margin-bottom:6px;}
-.admin-level-name{font-family:'Boogaloo',cursive;font-size:17px;color:#fff;flex:1;}
+.admin-level-name{font-family:'Boogaloo',cursive;font-size:17px;color:#fff;}
 .admin-level-meta{font-size:12px;color:rgba(255,255,255,0.4);}
-.admin-del-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:4px 14px;background:var(--red);color:#fff;border:none;cursor:pointer;}
+.admin-del-btn{font-family:'Boogaloo',cursive;font-size:14px;padding:4px 14px;background:var(--red);color:#fff;border:none;cursor:pointer;flex-shrink:0;}
+.admin-player-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);padding:12px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+.admin-player-name{font-family:'Boogaloo',cursive;font-size:18px;color:var(--yellow);min-width:120px;}
+.admin-player-stats{font-size:12px;color:rgba(255,255,255,0.55);flex:1;line-height:1.7;}
+.admin-player-actions{display:flex;gap:6px;flex-shrink:0;}
 /* ===== COMMENTS ===== */
 .comm-comments-section{margin-top:10px;border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;}
 .comm-comment{display:flex;gap:10px;margin-bottom:8px;font-size:13px;}
@@ -586,7 +595,7 @@ canvas{display:block;}
   <div class="hat-grid" id="hat-grid"></div>
 </div>
 
-<!-- FOLLOW FEED (handled inside community tab via sort=feed) -->
+<!-- ADMIN -->
 <div id="screen-admin" class="screen">
   <div class="screen-header">
     <button class="back-btn" onclick="showMenu()">← BACK</button>
@@ -594,26 +603,67 @@ canvas{display:block;}
     <span style="font-family:'Boogaloo',cursive;font-size:13px;color:#ff4500;padding:0 12px">YNSTEYN ONLY</span>
   </div>
   <div class="admin-inner" id="admin-inner">
-    <div class="admin-section">
-      <div class="admin-section-title">🪙 Give Coins to a Player</div>
-      <div class="admin-row">
-        <input class="dialog-input" id="admin-coins-username" type="text" placeholder="Username..." style="width:180px;font-size:18px" maxlength="20">
-        <input class="dialog-input" id="admin-coins-amount" type="number" min="1" max="1000000" placeholder="Amount..." style="width:150px;font-size:18px">
-        <button class="admin-btn admin-btn-gold" onclick="adminGiveCoins()">GIVE COINS</button>
-      </div>
-      <div class="admin-feedback" id="admin-coins-feedback"></div>
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminTab('tools')" id="atab-tools">🔧 Tools</button>
+      <button class="admin-tab" onclick="adminTab('players')" id="atab-players">👥 Players</button>
+      <button class="admin-tab" onclick="adminTab('levels')" id="atab-levels">🗺 Levels</button>
+      <button class="admin-tab" onclick="adminTab('stats')" id="atab-stats">📊 Stats</button>
     </div>
-    <div class="admin-section">
-      <div class="admin-section-title">🚫 Ban a Player</div>
-      <div class="admin-row">
-        <input class="dialog-input" id="admin-ban-username" type="text" placeholder="Username..." style="width:220px;font-size:18px" maxlength="20">
-        <button class="admin-btn admin-btn-red" onclick="adminBanPlayer()">BAN PLAYER</button>
+
+    <!-- TOOLS TAB -->
+    <div class="admin-tab-pane active" id="apane-tools">
+      <div class="admin-section">
+        <div class="admin-section-title">🪙 Give Coins</div>
+        <div class="admin-row">
+          <input class="dialog-input" id="admin-coins-username" type="text" placeholder="Username…" style="width:180px;font-size:18px" maxlength="20">
+          <input class="dialog-input" id="admin-coins-amount" type="number" min="1" max="1000000" placeholder="Amount…" style="width:150px;font-size:18px">
+          <button class="admin-btn admin-btn-gold" onclick="adminGiveCoins()">GIVE COINS</button>
+        </div>
+        <div class="admin-feedback" id="admin-coins-feedback"></div>
       </div>
-      <div class="admin-feedback" id="admin-ban-feedback"></div>
+      <div class="admin-section">
+        <div class="admin-section-title">🚫 Ban Player</div>
+        <div class="admin-row">
+          <input class="dialog-input" id="admin-ban-username" type="text" placeholder="Username…" style="width:220px;font-size:18px" maxlength="20">
+          <button class="admin-btn admin-btn-red" onclick="adminBanPlayer()">BAN PLAYER</button>
+        </div>
+        <div class="admin-feedback" id="admin-ban-feedback"></div>
+      </div>
+      <div class="admin-section" id="admin-lotw-section">
+        <div class="admin-section-title">🏆 Level of the Week</div>
+        <div class="admin-row">
+          <select class="dialog-input" id="lotw-level-sel" style="font-size:15px;max-width:300px"><option value="">Loading…</option></select>
+          <button class="admin-btn admin-btn-gold" onclick="adminSetLOTWFromSel()">SET AS LOTW</button>
+        </div>
+        <div class="admin-feedback" id="lotw-feedback"></div>
+      </div>
     </div>
-    <div class="admin-section">
-      <div class="admin-section-title">🗑 Delete a Level</div>
-      <div id="admin-levels-list"><div class="comm-loading">Loading levels...</div></div>
+
+    <!-- PLAYERS TAB -->
+    <div class="admin-tab-pane" id="apane-players">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+        <input class="dialog-input" id="admin-player-search" type="text" placeholder="Search player…" maxlength="20" style="font-size:16px;padding:6px 12px;" oninput="adminFilterPlayers()">
+        <button class="admin-btn admin-btn-gold" onclick="adminLoadPlayers()" style="font-size:15px;padding:7px 16px;">↻ Refresh</button>
+      </div>
+      <div id="admin-players-list"><div class="comm-loading">Click Refresh to load players.</div></div>
+    </div>
+
+    <!-- LEVELS TAB -->
+    <div class="admin-tab-pane" id="apane-levels">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+        <input class="dialog-input" id="admin-level-search" type="text" placeholder="Search level/author…" maxlength="30" style="font-size:16px;padding:6px 12px;" oninput="adminFilterLevels()">
+        <button class="admin-btn admin-btn-gold" onclick="adminLoadLevels()" style="font-size:15px;padding:7px 16px;">↻ Refresh</button>
+      </div>
+      <div id="admin-levels-list"><div class="comm-loading">Loading levels…</div></div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div class="admin-tab-pane" id="apane-stats">
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
+        <button class="admin-btn admin-btn-gold" onclick="adminLoadStats()" style="font-size:15px;padding:7px 16px;">↻ Refresh</button>
+      </div>
+      <div id="admin-stats-list"><div class="comm-loading">Click Refresh to load stats.</div></div>
     </div>
   </div>
 </div>
@@ -769,7 +819,7 @@ function showEndlessLevel(){
 function advanceEndless(){
   endlessLevelNum++;
   endlessTotalCoins+=G.coinsCollected;
-  endlessTotalScore=(endlessTotalScore||0)+G.score; // carry score across levels
+  endlessTotalScore=G.score; // save score so it survives initGameState+enterPlayMode reset
   showEndlessLevel();
 }
 
@@ -1617,8 +1667,6 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless,isDaily){
   G.storyLevelNum=storyNum;
   G.isEndless=!!isEndless;
   G.isDaily=!!isDaily;
-  // Restore accumulated score for endless (initGameState wipes G.score to 0)
-  if(isEndless && endlessTotalScore>0) G.score=endlessTotalScore;
   if(isStory&&storyNum) G.worldTheme=Math.floor((storyNum-1)/5);
   if(G.isEndless) G.worldTheme=Math.min(9,Math.floor((endlessLevelNum-1)/3));
   // Track community play count at START of play (not just on win)
@@ -1651,7 +1699,11 @@ function startGameEngine(lvlData,playOnly,isStory,storyNum,isEndless,isDaily){
   buildPaletteUI();
   buildTileTypeUI();
   G.player=defaultPlayer();
-  if(G.mode==='play') enterPlayMode();
+  if(G.mode==='play'){
+    enterPlayMode();
+    // Restore accumulated endless score AFTER enterPlayMode resets it to 0
+    if(isEndless && endlessTotalScore>0) G.score=endlessTotalScore;
+  }
   setupInputs();
   setupTouchControls();
   showTouchControls(G.mode==='play');
@@ -4379,49 +4431,41 @@ function renderLbList(elId,users,valFn,clickable){
 // =============================================
 // ADMIN
 // =============================================
+let _adminAllPlayers=[];
+let _adminAllLevels=[];
+
 function showAdmin(){
   if(!isAdmin()){showMenu();return;}
   showScreen('admin');
-  adminLoadLevels();
-  buildAdminLOTW();
+  adminTab('tools');
 }
 
+function adminTab(tab){
+  ['tools','players','levels','stats'].forEach(t=>{
+    document.getElementById('atab-'+t)?.classList.toggle('active',t===tab);
+    document.getElementById('apane-'+t)?.classList.toggle('active',t===tab);
+  });
+  if(tab==='tools')   buildAdminLOTW();
+  if(tab==='players') adminLoadPlayers();
+  if(tab==='levels')  adminLoadLevels();
+  if(tab==='stats')   adminLoadStats();
+}
+
+// ---- TOOLS TAB ----
+
 async function buildAdminLOTW(){
-  // Remove any existing LOTW section first (avoid duplicates on re-open)
-  const existing=document.getElementById('admin-lotw-section');
-  if(existing) existing.remove();
-  const adminInner=document.getElementById('admin-inner');
-  if(!adminInner) return;
-  const sec=document.createElement('div');
-  sec.id='admin-lotw-section';
-  sec.className='admin-section';
-  sec.innerHTML=`<div class="admin-section-title">🏆 Level of the Week</div>
-    <div class="admin-row">
-      <select class="dialog-input" id="lotw-level-sel" style="font-size:15px;max-width:280px"><option value="">Loading levels…</option></select>
-      <button class="admin-btn admin-btn-gold" onclick="adminSetLOTWFromSel()">SET AS LOTW</button>
-    </div>
-    <div class="admin-feedback" id="lotw-feedback"></div>`;
-  adminInner.appendChild(sec);
-  // Populate dropdown with community levels
+  const sel=document.getElementById('lotw-level-sel');
+  if(!sel) return;
+  sel.innerHTML='<option value="">Loading…</option>';
   try{
-    const lvls=await sbFetch('bf_levels?select=id,name,author&order=likes.desc&limit=100');
-    const sel=document.getElementById('lotw-level-sel');
-    if(!sel) return;
+    const lvls=await sbFetch('bf_levels?select=id,name,author&order=likes.desc&limit=200');
     sel.innerHTML='<option value="">— Pick a level —</option>';
-    if(lvls&&lvls.length){
-      lvls.forEach(lv=>{
-        const o=document.createElement('option');
-        o.value=lv.id;
-        o.textContent=`${lv.name} by ${lv.author}`;
-        sel.appendChild(o);
-      });
-    } else {
-      sel.innerHTML='<option value="">No published levels yet</option>';
-    }
-  }catch(e){
-    const sel=document.getElementById('lotw-level-sel');
-    if(sel) sel.innerHTML='<option value="">Failed to load levels</option>';
-  }
+    if(lvls&&lvls.length) lvls.forEach(lv=>{
+      const o=document.createElement('option');
+      o.value=lv.id; o.textContent=`${lv.name} by ${lv.author}`;
+      sel.appendChild(o);
+    }); else sel.innerHTML='<option value="">No published levels yet</option>';
+  }catch(e){ sel.innerHTML='<option value="">Failed to load levels</option>'; }
 }
 
 async function adminGiveCoins(){
@@ -4438,10 +4482,7 @@ async function adminGiveCoins(){
     const newCoins=(users[0].coins||0)+amount;
     await sbFetch(`bf_users?username=eq.${encodeURIComponent(target)}`,{method:'PATCH',prefer:'return=minimal',body:{coins:newCoins}});
     fb.textContent=`✅ Gave ${amount.toLocaleString()} coins to ${target}! (now ${newCoins.toLocaleString()})`;
-    // If giving to self, update local save too
-    if(target===currentUser.username){
-      const s=getSave();s.coins=newCoins;writeSave(s);updateCoinDisplays();
-    }
+    if(target===currentUser.username){const s=getSave();s.coins=newCoins;writeSave(s);updateCoinDisplays();}
     document.getElementById('admin-coins-username').value='';
     document.getElementById('admin-coins-amount').value='';
   }catch(e){fb.textContent='Error: '+e.message;}
@@ -4453,53 +4494,190 @@ async function adminBanPlayer(){
   const fb=document.getElementById('admin-ban-feedback');
   if(!raw||raw.length<2){fb.textContent='Enter a username.';return;}
   if(raw==='ynsteyn'){fb.textContent="Can't ban yourself!";return;}
-  if(!confirm(`Ban player "${raw}"? This will delete their account AND all their published levels.`))return;
+  if(!confirm(`Ban "${raw}"? Deletes their account + all their levels.`))return;
   fb.textContent='Banning...';
   try{
-    // Delete their levels
     await sbFetch(`bf_levels?author=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
-    // Delete their likes
     await sbFetch(`bf_likes?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
-    // Delete their ratings
     await sbFetch(`bf_ratings?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
-    // Delete the user
     await sbFetch(`bf_users?username=eq.${encodeURIComponent(raw)}`,{method:'DELETE'});
-    fb.textContent=`✅ Player "${raw}" has been banned and removed.`;
+    fb.textContent=`✅ "${raw}" banned and removed.`;
     document.getElementById('admin-ban-username').value='';
-    adminLoadLevels(); // refresh level list
+    _adminAllPlayers=_adminAllPlayers.filter(p=>p.username!==raw);
+    _adminAllLevels=_adminAllLevels.filter(l=>l.author!==raw);
   }catch(e){fb.textContent='Error: '+e.message;}
 }
 
-async function adminDeleteLevel(levelId, levelName){
+// ---- PLAYERS TAB ----
+
+async function adminLoadPlayers(){
   if(!isAdmin())return;
-  if(!confirm(`Delete level "${levelName}"? This cannot be undone.`))return;
+  const container=document.getElementById('admin-players-list');
+  if(!container)return;
+  container.innerHTML='<div class="comm-loading">Loading players…</div>';
   try{
-    await sbFetch(`bf_levels?id=eq.${encodeURIComponent(levelId)}`,{method:'DELETE'});
-    adminLoadLevels();
-  }catch(e){alert('Error: '+e.message);}
+    const users=await sbFetch('bf_users?select=username,coins,total_likes&order=coins.desc&limit=300');
+    // Also get level counts per author
+    const levels=await sbFetch('bf_levels?select=author&limit=1000');
+    const levelCounts={};
+    (levels||[]).forEach(l=>{ levelCounts[l.author]=(levelCounts[l.author]||0)+1; });
+    _adminAllPlayers=(users||[]).map(u=>({...u,levelCount:levelCounts[u.username]||0}));
+    renderAdminPlayers(_adminAllPlayers);
+  }catch(e){container.innerHTML=`<div class="comm-loading">Error: ${e.message}</div>`;}
 }
+
+function adminFilterPlayers(){
+  const q=(document.getElementById('admin-player-search')?.value||'').toLowerCase().trim();
+  renderAdminPlayers(q?_adminAllPlayers.filter(u=>u.username.includes(q)):_adminAllPlayers);
+}
+
+function renderAdminPlayers(users){
+  const container=document.getElementById('admin-players-list');
+  if(!container)return;
+  if(!users||!users.length){container.innerHTML='<div class="comm-loading">No players found.</div>';return;}
+  container.innerHTML='';
+  users.forEach(u=>{
+    const isAdm=u.username==='ynsteyn';
+    const div=document.createElement('div');
+    div.className='admin-player-card';
+    div.innerHTML=`
+      <div style="min-width:130px">
+        <div class="admin-player-name">${escHtml(u.username)}${isAdm?' 👑':''}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px">Player</div>
+      </div>
+      <div class="admin-player-stats">
+        🪙 <b>${(u.coins||0).toLocaleString()}</b> coins &nbsp;·&nbsp;
+        ❤️ <b>${u.total_likes||0}</b> total likes &nbsp;·&nbsp;
+        🗺 <b>${u.levelCount||0}</b> published levels
+      </div>
+      <div class="admin-player-actions">
+        ${!isAdm?`<button class="admin-del-btn" style="background:#e63946" onclick="adminQuickBan('${escHtml(u.username)}')">🚫 BAN</button>`:''}
+        <button class="admin-del-btn" style="background:#2d6a4f" onclick="adminQuickGiveCoins('${escHtml(u.username)}')">🪙 COINS</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+function adminQuickBan(username){
+  document.getElementById('admin-ban-username').value=username;
+  adminTab('tools');
+  document.getElementById('admin-ban-feedback').textContent=`Ready to ban "${username}" — press BAN PLAYER to confirm.`;
+}
+
+function adminQuickGiveCoins(username){
+  document.getElementById('admin-coins-username').value=username;
+  adminTab('tools');
+  document.getElementById('admin-coins-feedback').textContent=`Enter amount for "${username}" then press GIVE COINS.`;
+}
+
+// ---- LEVELS TAB ----
 
 async function adminLoadLevels(){
   if(!isAdmin())return;
   const container=document.getElementById('admin-levels-list');
-  container.innerHTML='<div class="comm-loading">Loading all levels...</div>';
+  if(!container)return;
+  container.innerHTML='<div class="comm-loading">Loading all levels…</div>';
   try{
-    const levels=await sbFetch('bf_levels?select=id,name,author,likes,plays,published_at&order=published_at.desc&limit=200');
-    if(!levels||levels.length===0){container.innerHTML='<div class="comm-loading">No published levels.</div>';return;}
-    container.innerHTML='';
-    levels.forEach(lv=>{
-      const row=document.createElement('div');
-      row.className='admin-level-row';
-      const ts=lv.published_at?new Date(lv.published_at).toLocaleDateString():'?';
-      row.innerHTML=`
-        <div style="flex:1">
-          <div class="admin-level-name">${escHtml(lv.name)}</div>
-          <div class="admin-level-meta">by ${escHtml(lv.author)} · ❤️${lv.likes||0} · ▶${lv.plays||0} · ${ts}</div>
-        </div>
-        <button class="admin-del-btn" onclick="adminDeleteLevel('${escHtml(lv.id)}','${escHtml(lv.name)}')">🗑 DELETE</button>
-      `;
-      container.appendChild(row);
-    });
+    const levels=await sbFetch('bf_levels?select=id,name,author,likes,plays,published_at&order=published_at.desc&limit=300');
+    _adminAllLevels=levels||[];
+    renderAdminLevels(_adminAllLevels);
+  }catch(e){container.innerHTML=`<div class="comm-loading">Error: ${e.message}</div>`;}
+}
+
+function adminFilterLevels(){
+  const q=(document.getElementById('admin-level-search')?.value||'').toLowerCase().trim();
+  renderAdminLevels(q?_adminAllLevels.filter(l=>l.name.toLowerCase().includes(q)||l.author.toLowerCase().includes(q)):_adminAllLevels);
+}
+
+function renderAdminLevels(levels){
+  const container=document.getElementById('admin-levels-list');
+  if(!container)return;
+  if(!levels||!levels.length){container.innerHTML='<div class="comm-loading">No levels found.</div>';return;}
+  container.innerHTML='';
+  levels.forEach(lv=>{
+    const row=document.createElement('div');
+    row.className='admin-level-row';
+    const ts=lv.published_at?new Date(lv.published_at).toLocaleDateString():'?';
+    const safeName=escHtml(lv.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    row.innerHTML=`
+      <div style="flex:1;min-width:0">
+        <div class="admin-level-name">${escHtml(lv.name)}</div>
+        <div class="admin-level-meta">by ${escHtml(lv.author)} · ❤️${lv.likes||0} · ▶${lv.plays||0} · ${ts}</div>
+      </div>
+      <button class="admin-del-btn" onclick="adminDeleteLevel('${escHtml(lv.id)}','${safeName}')">🗑 DELETE</button>`;
+    container.appendChild(row);
+  });
+}
+
+async function adminDeleteLevel(levelId,levelName){
+  if(!isAdmin())return;
+  if(!confirm(`Delete level "${levelName}"? This cannot be undone.`))return;
+  try{
+    await sbFetch(`bf_levels?id=eq.${encodeURIComponent(levelId)}`,{method:'DELETE'});
+    _adminAllLevels=_adminAllLevels.filter(l=>l.id!==levelId);
+    renderAdminLevels(_adminAllLevels);
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ---- STATS TAB ----
+
+async function adminLoadStats(){
+  if(!isAdmin())return;
+  const container=document.getElementById('admin-stats-list');
+  if(!container)return;
+  container.innerHTML='<div class="comm-loading">Loading stats…</div>';
+  try{
+    const [users,levels]=await Promise.all([
+      sbFetch('bf_users?select=username,coins,total_likes&order=coins.desc&limit=300'),
+      sbFetch('bf_levels?select=id,name,author,likes,plays,published_at&order=likes.desc&limit=300'),
+    ]);
+    const totalUsers=(users||[]).length;
+    const totalLevels=(levels||[]).length;
+    const totalCoins=(users||[]).reduce((s,u)=>s+(u.coins||0),0);
+    const totalPlays=(levels||[]).reduce((s,l)=>s+(l.plays||0),0);
+    const totalLikes=(levels||[]).reduce((s,l)=>s+(l.likes||0),0);
+    const topLevel=levels&&levels[0];
+    const mostPlayed=(levels||[]).slice().sort((a,b)=>(b.plays||0)-(a.plays||0))[0];
+
+    // Recent signups (last 7 days)
+    const week=Date.now()-7*86400000;
+    const recentLevels=(levels||[]).filter(l=>l.published_at&&new Date(l.published_at).getTime()>week).length;
+
+    container.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:18px">
+        ${[
+          ['👥 Players',totalUsers,'#4cc9f0'],
+          ['🗺 Levels',totalLevels,'#06d6a0'],
+          ['🪙 Total Coins',totalCoins.toLocaleString(),'#ffd700'],
+          ['▶ Total Plays',totalPlays.toLocaleString(),'#ff6b35'],
+          ['❤️ Total Likes',totalLikes.toLocaleString(),'#e63946'],
+          ['🆕 Levels (7d)',recentLevels,'#c77dff'],
+        ].map(([label,val,col])=>`
+          <div style="background:rgba(255,255,255,0.05);border:2px solid ${col}44;padding:14px 16px;text-align:center">
+            <div style="font-family:Boogaloo,cursive;font-size:28px;color:${col}">${val}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px">${label}</div>
+          </div>`).join('')}
+      </div>
+
+      <div style="font-family:Boogaloo,cursive;font-size:17px;color:#ff6b35;margin-bottom:10px">🏆 Top Levels</div>
+      ${(levels||[]).slice(0,10).map((l,i)=>`
+        <div class="admin-level-row" style="margin-bottom:5px">
+          <div style="font-family:Boogaloo,cursive;font-size:15px;color:rgba(255,255,255,0.3);width:24px">#${i+1}</div>
+          <div style="flex:1;min-width:0">
+            <div class="admin-level-name" style="font-size:14px">${escHtml(l.name)}</div>
+            <div class="admin-level-meta">by ${escHtml(l.author)} · ❤️${l.likes||0} · ▶${l.plays||0}</div>
+          </div>
+          <button class="admin-del-btn" onclick="adminDeleteLevel('${escHtml(l.id)}','${escHtml(l.name).replace(/'/g,"\\'")}')">🗑</button>
+        </div>`).join('')}
+
+      <div style="font-family:Boogaloo,cursive;font-size:17px;color:#ff6b35;margin:14px 0 10px">👑 Richest Players</div>
+      ${(users||[]).slice(0,10).map((u,i)=>`
+        <div class="admin-player-card" style="margin-bottom:5px">
+          <div style="font-family:Boogaloo,cursive;font-size:14px;color:rgba(255,255,255,0.3);width:24px">#${i+1}</div>
+          <div class="admin-player-name" style="font-size:15px;min-width:110px">${escHtml(u.username)}${u.username==='ynsteyn'?' 👑':''}</div>
+          <div class="admin-player-stats">🪙 ${(u.coins||0).toLocaleString()} · ❤️ ${u.total_likes||0}</div>
+          ${u.username!=='ynsteyn'?`<button class="admin-del-btn" style="background:#e63946;font-size:12px" onclick="adminQuickBan('${escHtml(u.username)}')">🚫</button>`:''}
+        </div>`).join('')}`;
   }catch(e){container.innerHTML=`<div class="comm-loading">Error: ${e.message}</div>`;}
 }
 
