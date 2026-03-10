@@ -189,6 +189,13 @@ canvas{display:block;}
 @keyframes titleBob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-8px) rotate(1deg);}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
 @keyframes puPop{0%{transform:scale(0) rotate(-10deg);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
+@keyframes skinUnlockBg{0%{opacity:0;}15%{opacity:1;}85%{opacity:1;}100%{opacity:0;}}
+@keyframes skinCharIn{0%{transform:translateY(120px) scale(0.3) rotate(-12deg);opacity:0;}55%{transform:translateY(-18px) scale(1.1) rotate(4deg);opacity:1;}75%{transform:translateY(6px) scale(0.97) rotate(-1deg);}100%{transform:translateY(0) scale(1) rotate(0deg);opacity:1;}}
+@keyframes skinTitleIn{0%,35%{opacity:0;transform:scale(0.4) translateY(30px);}60%{opacity:1;transform:scale(1.08) translateY(-4px);}80%{transform:scale(0.98);}100%{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes skinRaysSpin{from{transform:translate(-50%,-55%) rotate(0deg);}to{transform:translate(-50%,-55%) rotate(360deg);}}
+@keyframes skinSparkle{0%{transform:scale(0) rotate(0deg);opacity:1;}60%{opacity:1;}100%{transform:scale(1) rotate(180deg);opacity:0;}}
+@keyframes skinTap{0%,100%{opacity:0.5;}50%{opacity:1;}}
+@keyframes skinGlow{0%,100%{box-shadow:0 0 40px 10px rgba(255,190,11,0.3);}50%{box-shadow:0 0 80px 30px rgba(255,190,11,0.7);}}
 .fadeIn{animation:fadeIn .3s ease forwards;}
 
 /* ===== DAILY CHALLENGE ===== */
@@ -1336,12 +1343,192 @@ function drawSkinPreview(canvas,skin){
 
   ctx.restore();
 }
+// =============================================
+// SKIN UNLOCK ANIMATION
+// =============================================
+function showSkinUnlockAnimation(skin, isFree){
+  if(!skin) return;
+  closeModal('skin-unlock-anim');
+  const overlay=document.createElement('div');
+  overlay.id='skin-unlock-anim';
+  overlay.style.cssText=`
+    position:fixed;inset:0;z-index:9999;
+    background:radial-gradient(ellipse at center, #1a0a3a 0%, #0a0015 70%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    cursor:pointer;overflow:hidden;
+    animation:skinUnlockBg 3.6s ease forwards;
+  `;
+
+  // Spinning rays behind character
+  const rays=document.createElement('div');
+  rays.style.cssText=`
+    position:absolute;left:50%;top:45%;width:600px;height:600px;
+    background:conic-gradient(
+      rgba(255,190,11,0.18) 0deg, transparent 20deg,
+      rgba(255,190,11,0.14) 40deg, transparent 60deg,
+      rgba(255,190,11,0.18) 80deg, transparent 100deg,
+      rgba(255,190,11,0.14) 120deg, transparent 140deg,
+      rgba(255,190,11,0.18) 160deg, transparent 180deg,
+      rgba(255,190,11,0.14) 200deg, transparent 220deg,
+      rgba(255,190,11,0.18) 240deg, transparent 260deg,
+      rgba(255,190,11,0.14) 280deg, transparent 300deg,
+      rgba(255,190,11,0.18) 320deg, transparent 340deg,
+      rgba(255,190,11,0.14) 360deg
+    );
+    border-radius:50%;
+    transform:translate(-50%,-55%);
+    animation:skinRaysSpin 4s linear infinite;
+    opacity:0.9;
+  `;
+  overlay.appendChild(rays);
+
+  // Particle sparkles (created by JS canvas animation)
+  const particleCanvas=document.createElement('canvas');
+  particleCanvas.style.cssText='position:absolute;inset:0;pointer-events:none;';
+  particleCanvas.width=window.innerWidth;
+  particleCanvas.height=window.innerHeight;
+  overlay.appendChild(particleCanvas);
+
+  // "NEW SKIN UNLOCKED" header
+  const header=document.createElement('div');
+  header.style.cssText=`
+    font-family:Boogaloo,cursive;font-size:clamp(16px,4vw,24px);
+    color:var(--yellow);letter-spacing:5px;text-transform:uppercase;
+    margin-bottom:20px;opacity:0;
+    animation:skinTitleIn 0.5s 0.1s ease forwards;
+    text-shadow:0 0 20px rgba(255,190,11,0.8);
+  `;
+  header.textContent=isFree?'🏆 SKIN UNLOCKED!':'✨ NEW SKIN ACQUIRED!';
+  overlay.appendChild(header);
+
+  // Skin character canvas (big, animated bounce-in)
+  const skinWrap=document.createElement('div');
+  skinWrap.style.cssText=`
+    animation:skinCharIn 0.7s 0.2s cubic-bezier(.17,.67,.35,1.2) both;
+    animation:skinCharIn 0.7s 0.2s ease both;
+    position:relative;
+  `;
+  const skinCanvas=document.createElement('canvas');
+  const SIZE=Math.min(window.innerWidth*0.45, 280);
+  skinCanvas.width=SIZE; skinCanvas.height=SIZE;
+  skinCanvas.style.cssText=`display:block;animation:skinGlow 1.5s 0.8s ease infinite;`;
+  drawSkinPreview(skinCanvas, skin);
+  skinWrap.appendChild(skinCanvas);
+
+  // Shine circle behind skin
+  const shine=document.createElement('div');
+  shine.style.cssText=`
+    position:absolute;top:50%;left:50%;
+    width:${SIZE*1.1}px;height:${SIZE*1.1}px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,190,11,0.25) 0%, transparent 70%);
+    animation:skinGlow 1.5s ease infinite;
+  `;
+  skinWrap.insertBefore(shine, skinCanvas);
+  overlay.appendChild(skinWrap);
+
+  // Skin name
+  const nameEl=document.createElement('div');
+  nameEl.style.cssText=`
+    font-family:Boogaloo,cursive;font-size:clamp(28px,7vw,52px);
+    color:#fff;letter-spacing:2px;margin-top:18px;
+    text-shadow:0 0 30px rgba(255,255,255,0.5),0 4px 0 rgba(0,0,0,0.5);
+    opacity:0;animation:skinTitleIn 0.5s 0.6s ease forwards;
+  `;
+  nameEl.textContent=skin.name;
+  overlay.appendChild(nameEl);
+
+  // Tap to continue
+  const tap=document.createElement('div');
+  tap.style.cssText=`
+    font-family:Boogaloo,cursive;font-size:16px;color:rgba(255,255,255,0.45);
+    margin-top:28px;letter-spacing:3px;
+    animation:skinTap 1.4s 1.5s ease infinite;
+  `;
+  tap.textContent='TAP TO CONTINUE';
+  overlay.appendChild(tap);
+
+  document.body.appendChild(overlay);
+
+  // Particle system
+  const pctx=particleCanvas.getContext('2d');
+  const cx0=particleCanvas.width/2, cy0=particleCanvas.height*0.42;
+  const particles=[];
+  const COLORS=['#ffbe0b','#ff006e','#06d6a0','#3a86ff','#8338ec','#fb5607','#ffffff','#ffd166'];
+  function spawnBurst(n){
+    for(let i=0;i<n;i++){
+      const angle=Math.random()*Math.PI*2;
+      const speed=3+Math.random()*7;
+      const type=Math.random()<0.5?'circle':'star';
+      particles.push({
+        x:cx0, y:cy0,
+        vx:Math.cos(angle)*speed,
+        vy:Math.sin(angle)*speed - 2,
+        size: type==='star' ? 6+Math.random()*8 : 4+Math.random()*6,
+        color:COLORS[Math.floor(Math.random()*COLORS.length)],
+        alpha:1, decay:0.015+Math.random()*0.018,
+        type, rotation:Math.random()*Math.PI*2,
+        rotSpeed:(Math.random()-0.5)*0.2,
+        gravity:0.15+Math.random()*0.1,
+      });
+    }
+  }
+  function drawStar(ctx, x, y, size, rotation){
+    ctx.save(); ctx.translate(x,y); ctx.rotate(rotation);
+    ctx.beginPath();
+    for(let i=0;i<5;i++){
+      const a=i*Math.PI*2/5 - Math.PI/2;
+      const ia=a+Math.PI/5;
+      i===0?ctx.moveTo(Math.cos(a)*size, Math.sin(a)*size):ctx.lineTo(Math.cos(a)*size, Math.sin(a)*size);
+      ctx.lineTo(Math.cos(ia)*size*0.42, Math.sin(ia)*size*0.42);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  let animFrame, elapsed=0;
+  spawnBurst(60);
+  function animParticles(){
+    elapsed++;
+    if(elapsed===18) spawnBurst(40); // second burst
+    if(elapsed===36) spawnBurst(30); // third burst
+    pctx.clearRect(0,0,particleCanvas.width,particleCanvas.height);
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];
+      p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity;
+      p.vx*=0.98; p.alpha-=p.decay; p.rotation+=p.rotSpeed;
+      if(p.alpha<=0){particles.splice(i,1);continue;}
+      pctx.globalAlpha=p.alpha;
+      pctx.fillStyle=p.color;
+      if(p.type==='star'){
+        drawStar(pctx,p.x,p.y,p.size,p.rotation);
+      } else {
+        pctx.beginPath();pctx.arc(p.x,p.y,p.size/2,0,Math.PI*2);pctx.fill();
+      }
+    }
+    pctx.globalAlpha=1;
+    if(elapsed<220) animFrame=requestAnimationFrame(animParticles);
+  }
+  animFrame=requestAnimationFrame(animParticles);
+
+  // Dismiss after 3.6s or on tap
+  const dismiss=()=>{
+    cancelAnimationFrame(animFrame);
+    overlay.style.transition='opacity 0.3s';
+    overlay.style.opacity='0';
+    setTimeout(()=>overlay.remove(), 320);
+  };
+  overlay.addEventListener('click', dismiss);
+  setTimeout(dismiss, 3600);
+}
+
 function buySkin(skin, price){
   if(price===undefined) price=skin.price;
   const s=getSave();
   if(s.coins<price){alert('Not enough coins!');return;}
   s.coins-=price; s.owned.push(skin.id); s.equipped=skin.id;
   writeSave(s); buildShopUI(); updateCoinDisplays();
+  showSkinUnlockAnimation(skin, false);
 }
 function equipSkin(id){ const s=getSave(); s.equipped=id; writeSave(s); buildShopUI(); }
 
@@ -2023,6 +2210,7 @@ function winPlayer(){
       newSkins.forEach(sk=>s.owned.push(sk.id));
       if(newSkins.length>0){
         G._worldBonusMsg=`🌍 World ${worldsNow} complete! Unlocked: ${newSkins.map(sk=>sk.name).join(', ')}!`;
+        G._newSkinsUnlocked=newSkins; // show animation after exit
       } else {
         G._worldBonusMsg=`🌍 World ${worldsNow} complete!`;
       }
@@ -3022,9 +3210,14 @@ function gameLoop(){
         drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}  |  (No coins in custom levels)`,'#ffbe0b');
       }
       if(G.winTimer===1&&!G.isEndless){
+        const skinsToShow=G._newSkinsUnlocked||[];
         if(G.isDaily){ stopGame(); showDaily(); }
         else if(G.isPlayOnly){ exitGame(); }
         else{ toggleGameMode(); }
+        // Show skin unlock animation(s) after exiting — staggered if multiple
+        if(skinsToShow.length>0){
+          skinsToShow.forEach((sk,i)=>setTimeout(()=>showSkinUnlockAnimation(sk,true), 400+i*3800));
+        }
       }
     }
   } else { drawBuildModeHint(); }
