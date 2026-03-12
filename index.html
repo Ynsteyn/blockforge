@@ -120,6 +120,10 @@ canvas{display:block;}
 .tb-score{font-family:'Boogaloo',cursive;font-size:17px;color:var(--yellow);margin-left:auto;white-space:nowrap;}
 .tb-lives{font-family:'Boogaloo',cursive;font-size:17px;color:var(--red);white-space:nowrap;}
 .tb-coins-count{font-family:'Boogaloo',cursive;font-size:17px;color:var(--yellow);white-space:nowrap;}
+/* Timer */
+#tb-timer{font-family:'Boogaloo',cursive;font-size:17px;color:#06d6a0;white-space:nowrap;display:none;letter-spacing:1px;}
+#tb-timer.pb{color:#ffd700;animation:timerPB .4s ease;}
+@keyframes timerPB{0%{transform:scale(1.3);}100%{transform:scale(1);}}
 #palette-row{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 .swatch{width:20px;height:20px;border:2px solid rgba(255,255,255,0.2);border-radius:3px;cursor:pointer;transition:transform .1s;}
 .swatch:hover,.swatch.active{transform:scale(1.3);border-color:#fff;}
@@ -243,6 +247,14 @@ canvas{display:block;}
 .daily-lb-rank{font-family:'Boogaloo',cursive;font-size:22px;width:32px;text-align:center;color:rgba(255,255,255,0.4);}
 .daily-lb-name{font-family:'Boogaloo',cursive;font-size:18px;color:#fff;flex:1;}
 .daily-lb-score{font-family:'Boogaloo',cursive;font-size:18px;color:var(--yellow);}
+/* Daily leaderboard tabs */
+.daily-lb-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid rgba(255,255,255,0.1);}
+.daily-lb-tab{font-family:'Boogaloo',cursive;font-size:16px;padding:7px 18px;background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.daily-lb-tab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+.daily-lb-time{font-family:'Boogaloo',cursive;font-size:18px;color:#06d6a0;}
+.daily-lb-time.gold{color:#ffd700;}
+/* Level best time badge shown on win */
+.time-pb-badge{display:inline-block;background:#ffd700;color:#12121f;font-family:'Boogaloo',cursive;font-size:13px;padding:2px 8px;margin-left:8px;border-radius:2px;vertical-align:middle;}
 .daily-you{background:rgba(255,190,11,0.08)!important;border-radius:4px;}
 /* Boss HP bar */
 #boss-hp-bar{position:absolute;top:40px;left:50%;transform:translateX(-50%);width:60%;max-width:400px;z-index:15;display:none;flex-direction:column;align-items:center;gap:3px;}
@@ -637,6 +649,7 @@ canvas{display:block;}
     <span class="tb-score" id="tb-score" style="display:none">SCORE: 0</span>
     <span class="tb-lives" id="tb-lives" style="display:none">♥♥♥</span>
     <span class="tb-coins-count" id="tb-coins" style="display:none">🪙0</span>
+    <span id="tb-timer">⏱ 0.00</span>
   </div>
   <div id="game-area">
     <canvas id="gameCanvas"></canvas>
@@ -951,6 +964,111 @@ function updateGFXButtons(){
   }
 }
 
+// =============================================
+// LEVEL TIMER SYSTEM
+// =============================================
+// Uses performance.now() for ms accuracy.
+// Starts on enterPlayMode, pauses during death/win overlays, stops on winPlayer.
+// Never resets on respawn — only resets when leaving the level.
+let _timerStart = 0;       // performance.now() when timer last un-paused
+let _timerAccum = 0;       // ms accumulated before current segment
+let _timerRunning = false;
+let _timerFinalMs = 0;     // frozen value at finish line
+let _timerPaused = false;  // true while death / win overlay is showing
+
+function timerStart(){
+  _timerAccum = 0;
+  _timerStart = performance.now();
+  _timerRunning = true;
+  _timerPaused = false;
+  _timerFinalMs = 0;
+  const el = document.getElementById('tb-timer');
+  if(el){ el.textContent='⏱ 0.00'; el.style.display=''; el.className=''; }
+}
+
+function timerStop(){
+  if(!_timerRunning) return;
+  _timerFinalMs = _timerAccum + (performance.now() - _timerStart);
+  _timerRunning = false;
+  _timerPaused = false;
+}
+
+function timerPause(){
+  if(!_timerRunning || _timerPaused) return;
+  _timerAccum += performance.now() - _timerStart;
+  _timerPaused = true;
+}
+
+function timerResume(){
+  if(!_timerRunning || !_timerPaused) return;
+  _timerStart = performance.now();
+  _timerPaused = false;
+}
+
+function timerHide(){
+  _timerRunning = false;
+  _timerPaused = false;
+  const el = document.getElementById('tb-timer');
+  if(el) el.style.display='none';
+}
+
+function timerGetMs(){
+  if(!_timerRunning) return _timerFinalMs;
+  if(_timerPaused) return _timerAccum;
+  return _timerAccum + (performance.now() - _timerStart);
+}
+
+function timerFormat(ms){
+  if(ms < 60000){
+    const s = (ms/1000).toFixed(2);
+    return s + 's';
+  }
+  const m = Math.floor(ms/60000);
+  const s = ((ms%60000)/1000).toFixed(2);
+  return m + ':' + (s < 10 ? '0'+s : s);
+}
+
+// Called every game frame while in play mode
+function timerTick(){
+  const el = document.getElementById('tb-timer');
+  if(!el || !_timerRunning || _timerPaused) return;
+  el.textContent = '⏱ ' + timerFormat(timerGetMs());
+}
+
+// Get a stable key for a level's best time
+function getLevelTimerKey(){
+  if(G.isDaily) return 'daily_' + getDailyDateStr();
+  if(G.isStoryMode && G.storyLevelNum) return 'story_' + G.storyLevelNum;
+  if(G.isEndless) return 'endless_lv_' + endlessLevelNum;
+  if(typeof currentCommunityLevelId !== 'undefined' && currentCommunityLevelId)
+    return 'comm_' + currentCommunityLevelId;
+  return null; // custom build mode — no best tracking
+}
+
+// Check if current finalMs is a new personal best; save + return true if so
+function checkAndSaveTimerPB(finalMs){
+  const key = getLevelTimerKey();
+  if(!key) return false;
+  const s = getSave();
+  if(!s.levelBestTimes) s.levelBestTimes = {};
+  const prev = s.levelBestTimes[key];
+  if(prev === undefined || finalMs < prev){
+    s.levelBestTimes[key] = Math.round(finalMs);
+    writeSave(s);
+    return true;
+  }
+  return false;
+}
+
+function getTimerPB(){
+  const key = getLevelTimerKey();
+  if(!key) return null;
+  const s = getSave();
+  if(!s.levelBestTimes) return null;
+  const v = s.levelBestTimes[key];
+  return v !== undefined ? v : null;
+}
+
 
 function getSaveKey(){
   if(currentUser&&!currentUser.isGuest) return 'blockforge_save_'+currentUser.username.toLowerCase();
@@ -967,6 +1085,7 @@ function getSave(){
   if(!d.storyProgress) d.storyProgress=0;
   if(!d.storyStars) d.storyStars={};
   if(d.displayName===undefined) d.displayName='';
+  if(!d.levelBestTimes) d.levelBestTimes={};
   return d;
 }
 
@@ -1639,7 +1758,9 @@ function buildStoryUI(){
       card.style.borderColor=world.color;
       const stars='⭐'.repeat(Math.min(lv.diff,10));
       const bossTag=lv.boss?'<div style="font-size:9px;color:#ff4500;font-weight:bold;margin-top:1px">👿 BOSS</div>':'';
-      card.innerHTML=`<div class="level-num" style="color:${world.color}">${lv.num}</div><div class="level-name">${lv.name}</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">${stars}</div>${bossTag}`;
+      const pbMs=s.levelBestTimes&&s.levelBestTimes['story_'+lv.num];
+      const pbTag=pbMs?`<div style="font-size:9px;color:#06d6a0;margin-top:1px">⏱ ${timerFormat(pbMs)}</div>`:'';
+      card.innerHTML=`<div class="level-num" style="color:${world.color}">${lv.num}</div><div class="level-name">${lv.name}</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">${stars}</div>${bossTag}${pbTag}`;
       if(unlocked) card.onclick=()=>{ showPlayLevel(generateStoryLevel(lv.num),true,lv.num); };
       grid.appendChild(card);
     });
@@ -2516,6 +2637,7 @@ function stopGame(){
   touchKeys.left=false;touchKeys.right=false;touchKeys.jump=false;
   const bar=document.getElementById('boss-hp-bar');
   if(bar) bar.style.display='none';
+  timerHide();
 }
 function exitGame(){
   stopGame();
@@ -2715,6 +2837,8 @@ function showGameHUD(playing){
   ['tb-score','tb-lives','tb-coins'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.style.display=playing?'':'none';
   });
+  const tel=document.getElementById('tb-timer');
+  if(tel) tel.style.display=playing?'':'none';
 }
 // Pre-computed teleporter positions — built once when entering play mode
 let _tpMapA=null, _tpMapB=null; // {r, c} for first type-17 and type-18 found
@@ -2743,6 +2867,7 @@ function enterPlayMode(){
   buildTeleporterMap();
   _hudCache={score:-1,lives:-1,coins:-1,golden:false,endless:false,lv:0};
   updatePowerupHUD();
+  timerStart(); // ← start level timer
 }
 
 // =============================================
@@ -3125,6 +3250,13 @@ function winPlayer(){
   spawnParticles(p.x+p.w/2,p.y,'#ffbe0b',30);
   sfx('win');
   G.winTimer=G.isEndless?180:140;
+  // Stop timer and record PB
+  timerStop();
+  G._levelFinishMs = _timerFinalMs;
+  G._levelTimerIsPB = checkAndSaveTimerPB(_timerFinalMs);
+  // Flash timer gold if PB
+  const tel=document.getElementById('tb-timer');
+  if(tel){ tel.textContent='⏱ '+timerFormat(_timerFinalMs); tel.className=G._levelTimerIsPB?'pb':''; }
   const s=getSave();
   // Coins only awarded in Story Mode or Endless — not from custom/community levels
   const earnCoins=G.isStoryMode||G.isEndless;
@@ -4294,6 +4426,10 @@ function gameLoop(){
     drawParticles();
     drawPlayer();
     if(GFX==='high'||G.frame%6===0) updateHUDLabels();
+    // Pause timer during death/win overlays, run otherwise
+    const overlayActive = G.deathTimer>0 || G.winTimer>0;
+    if(overlayActive) timerPause(); else timerResume();
+    timerTick();
     if(G.deathTimer>0){
       G.deathTimer--;
       if(G.lives>0){
@@ -4335,17 +4471,20 @@ function gameLoop(){
     }
     if(G.winTimer>0){
       G.winTimer--;
+      const _tStr = G._levelFinishMs ? timerFormat(G._levelFinishMs) : '';
+      const _pbTag = G._levelTimerIsPB ? ' 🏅 NEW BEST!' : '';
+      const _timeNote = _tStr ? `  |  ⏱ ${_tStr}${_pbTag}` : '';
       if(G.isEndless){
-        drawMsgOverlay(`LEVEL ${endlessLevelNum} CLEAR! 🎉`,`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins  |  Next level...`,'#06d6a0');
+        drawMsgOverlay(`LEVEL ${endlessLevelNum} CLEAR! 🎉`,`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins${_timeNote}`,'#06d6a0');
       } else if(G.isDaily){
         const dailyScore=G.score+G.coinsCollected*10;
         const coinMsg=G._dailyCoinMsg||'';
-        drawMsgOverlay('📅 DAILY CLEAR! 🎉',`Score: ${dailyScore.toLocaleString()}  |  Submitted to leaderboard!${coinMsg?'  |  '+coinMsg:''}`,'#ffd700');
+        drawMsgOverlay('📅 DAILY CLEAR! 🎉',`Score: ${dailyScore.toLocaleString()}  |  Submitted!${coinMsg?'  |  '+coinMsg:''}${_timeNote}`,'#ffd700');
       } else if(G.isStoryMode){
         const bonusMsg=G._worldBonusMsg?`  |  ${G._worldBonusMsg}`:'';
-        drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins earned${bonusMsg}`,'#ffbe0b');
+        drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}  |  🪙 +${G.coinsCollected*10+Math.floor(G.score/100)} coins${_timeNote}${bonusMsg}`,'#ffbe0b');
       } else {
-        drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}  |  (No coins in custom levels)`,'#ffbe0b');
+        drawMsgOverlay('YOU WIN! 🎉',`Score: ${G.score}${_timeNote}`,'#ffbe0b');
       }
       if(G.winTimer===1&&!G.isEndless){
         const skinsToShow=G._newSkinsUnlocked||[];
@@ -4926,19 +5065,23 @@ async function showDaily(){
   const s=getSave();
   const alreadyPlayed=s.dailyPlayed===dateStr;
   const myScore=s.dailyScore||0;
+  const myBestTimeMs=(s.levelBestTimes&&s.levelBestTimes['daily_'+dateStr])||0;
 
-  // Load leaderboard
-  let scores=[];
-  let loadError='';
+  // Load both leaderboards in parallel
+  let scores=[], times=[], loadError='';
   try{
-    const res=await sbFetch(`bf_daily_scores?date=eq.${encodeURIComponent(dateStr)}&order=score.desc&limit=20&select=username,score`);
-    scores=res||[];
+    const [scoreRes, timeRes] = await Promise.all([
+      sbFetch(`bf_daily_scores?date=eq.${encodeURIComponent(dateStr)}&order=score.desc&limit=20&select=username,score`),
+      sbFetch(`bf_daily_scores?date=eq.${encodeURIComponent(dateStr)}&completion_time=not.is.null&order=completion_time.asc&limit=20&select=username,completion_time`),
+    ]);
+    scores=scoreRes||[];
+    times=timeRes||[];
   }catch(e){
     loadError=e.message||'Unknown error';
-    scores=[];
   }
 
-  const myRank=scores.findIndex(r=>r.username===currentUser?.username)+1;
+  const myScoreRank=scores.findIndex(r=>r.username===currentUser?.username)+1;
+  const myTimeRank=times.findIndex(r=>r.username===currentUser?.username)+1;
 
   inner.innerHTML='';
 
@@ -4950,34 +5093,79 @@ async function showDaily(){
     <div class="daily-subtitle">A NEW LEVEL EVERY DAY</div>
     <div class="daily-date">📆 ${dateStr}</div>
     ${alreadyPlayed
-      ? `<div class="daily-played-msg">✅ Today's score: <span class="daily-score-display">${myScore.toLocaleString()}</span></div>
-         ${myRank>0?`<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:4px">Your rank: #${myRank}</div>`:''}`
+      ? `<div class="daily-played-msg">✅ Score: <span class="daily-score-display">${myScore.toLocaleString()}</span>${myBestTimeMs?`  &nbsp;⏱ <span style="color:#06d6a0;font-family:'Boogaloo',cursive;font-size:22px;">${timerFormat(myBestTimeMs)}</span>`:''}</div>
+         <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px">${myScoreRank>0?`Score rank: #${myScoreRank}`:''} ${myTimeRank>0?`  Time rank: #${myTimeRank}`:''}</div>`
       : `<button class="daily-play-btn" onclick="startDailyChallenge()">▶ PLAY TODAY'S LEVEL</button>`
     }
-    ${!currentUser||currentUser.isGuest?'<div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px">Log in to submit your score to the leaderboard</div>':''}
+    ${!currentUser||currentUser.isGuest?'<div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px">Log in to submit your score</div>':''}
     <button onclick="showDaily()" style="font-family:Boogaloo,cursive;font-size:13px;margin-top:10px;padding:4px 14px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.4);cursor:pointer;">↻ Refresh</button>
   `;
   inner.appendChild(hdr);
 
-  // Leaderboard
+  // Leaderboard with tabs
   const lb=document.createElement('div');
   lb.className='daily-lb-section';
-  lb.innerHTML=`<div class="daily-lb-title">🏆 Today's Leaderboard</div>`;
+
   if(loadError){
-    lb.innerHTML+=`<div style="color:rgba(255,100,0,0.8);font-size:13px;padding:8px 0">⚠️ Could not load scores: ${escHtml(loadError)}<br><small style="opacity:.6">Make sure daily_challenge_setup.sql has been run in Supabase.</small></div>`;
-  } else if(scores.length===0){
-    lb.innerHTML+=`<div style="color:rgba(255,255,255,0.4);font-size:14px">No scores yet today — be the first!</div>`;
+    lb.innerHTML=`<div class="daily-lb-title">🏆 Leaderboard</div><div style="color:rgba(255,100,0,0.8);font-size:13px;padding:8px 0">⚠️ Could not load: ${escHtml(loadError)}<br><small style="opacity:.6">Make sure daily_challenge_setup.sql has been run in Supabase.</small></div>`;
   } else {
-    scores.forEach((row,i)=>{
-      const isMe=row.username===currentUser?.username;
-      const rankEmoji=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
-      const div=document.createElement('div');
-      div.className='daily-lb-row'+(isMe?' daily-you':'');
-      div.innerHTML=`<span class="daily-lb-rank">${rankEmoji}</span><span class="daily-lb-name">${escHtml(row.username)}${isMe?' (you)':''}</span><span class="daily-lb-score">🏅 ${Number(row.score).toLocaleString()}</span>`;
-      lb.appendChild(div);
-    });
+    // Build tab UI
+    lb.innerHTML=`
+      <div class="daily-lb-tabs">
+        <button class="daily-lb-tab active" id="dlb-tab-score" onclick="dailyLbTab('score')">🏅 Top Scores</button>
+        <button class="daily-lb-tab" id="dlb-tab-time" onclick="dailyLbTab('time')">⏱ Fastest Times</button>
+      </div>
+      <div id="dlb-score-panel"></div>
+      <div id="dlb-time-panel" style="display:none"></div>
+    `;
+
+    // Score panel
+    const scorePanel=lb.querySelector('#dlb-score-panel');
+    if(scores.length===0){
+      scorePanel.innerHTML='<div style="color:rgba(255,255,255,0.4);font-size:14px;padding:8px 0">No scores yet today — be the first!</div>';
+    } else {
+      scores.forEach((row,i)=>{
+        const isMe=row.username===currentUser?.username;
+        const rankEmoji=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+        const div=document.createElement('div');
+        div.className='daily-lb-row'+(isMe?' daily-you':'');
+        div.innerHTML=`<span class="daily-lb-rank">${rankEmoji}</span><span class="daily-lb-name">${escHtml(row.username)}${isMe?' <span style="font-size:12px;color:var(--yellow)">(you)</span>':''}</span><span class="daily-lb-score">🏅 ${Number(row.score).toLocaleString()}</span>`;
+        scorePanel.appendChild(div);
+      });
+    }
+
+    // Time panel
+    const timePanel=lb.querySelector('#dlb-time-panel');
+    if(times.length===0){
+      timePanel.innerHTML='<div style="color:rgba(255,255,255,0.4);font-size:14px;padding:8px 0">No times recorded yet — finish the level to appear here!</div>';
+    } else {
+      times.forEach((row,i)=>{
+        const isMe=row.username===currentUser?.username;
+        const rankEmoji=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+        const ms=Number(row.completion_time);
+        const div=document.createElement('div');
+        div.className='daily-lb-row'+(isMe?' daily-you':'');
+        div.innerHTML=`<span class="daily-lb-rank">${rankEmoji}</span><span class="daily-lb-name">${escHtml(row.username)}${isMe?' <span style="font-size:12px;color:var(--yellow)">(you)</span>':''}</span><span class="daily-lb-time${i===0?' gold':''}">⏱ ${timerFormat(ms)}</span>`;
+        timePanel.appendChild(div);
+      });
+    }
   }
   inner.appendChild(lb);
+}
+
+function dailyLbTab(tab){
+  const scoreBtn=document.getElementById('dlb-tab-score');
+  const timeBtn=document.getElementById('dlb-tab-time');
+  const scorePanel=document.getElementById('dlb-score-panel');
+  const timePanel=document.getElementById('dlb-time-panel');
+  if(!scoreBtn||!timeBtn||!scorePanel||!timePanel) return;
+  if(tab==='score'){
+    scoreBtn.classList.add('active'); timeBtn.classList.remove('active');
+    scorePanel.style.display=''; timePanel.style.display='none';
+  } else {
+    timeBtn.classList.add('active'); scoreBtn.classList.remove('active');
+    timePanel.style.display=''; scorePanel.style.display='none';
+  }
 }
 
 function startDailyChallenge(){
@@ -5000,6 +5188,12 @@ async function submitDailyScore(score){
   if(s.dailyPlayed===dateStr&&(s.dailyScore||0)>=score) return;
   s.dailyPlayed=dateStr;
   s.dailyScore=score;
+  // Save best time for today
+  const finishMs = G._levelFinishMs||0;
+  const prevTime = s.levelBestTimes&&s.levelBestTimes['daily_'+dateStr];
+  const bestTime = (prevTime&&prevTime<finishMs&&finishMs>0) ? prevTime : (finishMs||null);
+  if(!s.levelBestTimes) s.levelBestTimes={};
+  if(finishMs>0) s.levelBestTimes['daily_'+dateStr]=finishMs;
   // Give coins for daily completion
   const coinsEarned=Math.floor(score/50)+100;
   s.coins+=coinsEarned;
@@ -5009,10 +5203,12 @@ async function submitDailyScore(score){
   // Submit to Supabase (upsert — one score per user per day)
   if(currentUser&&!currentUser.isGuest){
     try{
+      const body={username:currentUser.username,date:dateStr,score};
+      if(finishMs>0) body.completion_time=Math.round(finishMs);
       await sbFetch('bf_daily_scores',{
         method:'POST',
         prefer:'resolution=merge-duplicates,return=minimal',
-        body:{username:currentUser.username,date:dateStr,score},
+        body,
       });
     }catch(e){console.warn('Daily score submit failed',e);}
   }
@@ -5291,6 +5487,7 @@ async function loadCommunityLevels(){
         <div class="comm-meta">by <span class="profile-link" onclick="showProfile('${escHtml(lv.author)}')">${escHtml(lv.author)}</span>
         ${canFollow?`<button class="follow-btn${isFollowing?' following':''}" id="follow-${escHtml(lv.author)}" onclick="toggleFollow('${escHtml(lv.author)}',this)">${isFollowing?'✓ Following':'+ Follow'}</button>`:''}
         · ${timeAgo(ts)} · ${stars} · ▶ ${plays.toLocaleString()}
+        ${(()=>{const pbMs=getSave().levelBestTimes&&getSave().levelBestTimes['comm_'+lv.id];return pbMs?`<span style="color:#06d6a0;font-size:11px;margin-left:6px">⏱ PB: ${timerFormat(pbMs)}</span>`:''})()}
         ${lv.tags&&lv.tags.length?lv.tags.map(t=>`<span style="font-size:11px;padding:1px 6px;background:rgba(255,255,255,0.08);margin-left:4px">${escHtml(t)}</span>`).join(''):''}
         </div>`;
       const actions=document.createElement('div');
