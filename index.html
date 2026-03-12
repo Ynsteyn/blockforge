@@ -4448,7 +4448,13 @@ function gameLoop(){
       }
       if(G.deathTimer===1){
         if(G.lives>0){
-          respawnPlayer();
+          // 10% chance of a commercial break ad on any death (Poki only)
+          if(_pokiReady && Math.random()<0.10){
+            PokiSDK.gameplayStop();
+            PokiSDK.commercialBreak().then(()=>{ PokiSDK.gameplayStart(); respawnPlayer(); });
+          } else {
+            respawnPlayer();
+          }
         } else if(!G._reviveUsed&&!G.isEndless&&_pokiReady) {
           // Offer revive via rewarded ad (only once per run, not in endless)
           G._reviveUsed=true;
