@@ -1108,6 +1108,23 @@ const SKINS=[
   {id:'demon',    name:'Void Stalker',  price:0, worldUnlock:6, colors:{body:'#7209b7',shirt:'#3a0ca3',pants:'#10002b',shoe:'#240046',hair:'#9d4edd'}},
   {id:'golden',   name:'Gold Champion', price:0, worldUnlock:8, colors:{body:'#ffd700',shirt:'#fb8500',pants:'#e85d04',shoe:'#9d0208',hair:'#ffbe0b'}},
   {id:'admin',   name:'👑 The Admin',  price:0, colors:{body:'#ffd700',shirt:'#ff4500',pants:'#1a1a1a',shoe:'#ff4500',hair:'#ffd700'}, adminOnly:true},
+
+  // ── AD-UNLOCK SKINS ──────────────────────────────────────────────────────
+  // 1 ad
+  {id:'surfer',  name:'Surf Dude',     price:0, adUnlock:1, colors:{body:'#f9c74f',shirt:'#43aa8b',pants:'#277da1',shoe:'#f8961e',hair:'#c77dff'}},
+  {id:'punk',    name:'Street Punk',   price:0, adUnlock:1, colors:{body:'#f4a261',shirt:'#e63946',pants:'#2b2d42',shoe:'#ef233c',hair:'#9d4edd'}},
+  {id:'cowgirl', name:'Prairie Star',  price:0, adUnlock:1, colors:{body:'#e9c46a',shirt:'#f4a261',pants:'#8b5e3c',shoe:'#5c3317',hair:'#a0522d'}},
+  {id:'cyber',   name:'Cyber Spark',   price:0, adUnlock:1, colors:{body:'#4cc9f0',shirt:'#4361ee',pants:'#3a0ca3',shoe:'#7209b7',hair:'#4cc9f0'}},
+  {id:'lumberjack',name:'Lumberjack',  price:0, adUnlock:1, colors:{body:'#d4a373',shirt:'#bc4749',pants:'#386641',shoe:'#6b3c2a',hair:'#5c3317'}},
+  // 2 ads
+  {id:'specter', name:'The Specter',   price:0, adUnlock:2, colors:{body:'#adb5bd',shirt:'#6c757d',pants:'#343a40',shoe:'#212529',hair:'#dee2e6'}},
+  {id:'phoenix', name:'Phoenix',       price:0, adUnlock:2, colors:{body:'#ff6b6b',shirt:'#ff4500',pants:'#1a0000',shoe:'#9d0208',hair:'#ffd700'}},
+  {id:'atlantis',name:'Atlantean',     price:0, adUnlock:2, colors:{body:'#48cae4',shirt:'#0096c7',pants:'#023e8a',shoe:'#03045e',hair:'#90e0ef'}},
+  // 3 ads
+  {id:'warlord', name:'Dark Warlord',  price:0, adUnlock:3, colors:{body:'#6d2b2b',shirt:'#370617',pants:'#1a0000',shoe:'#0d0000',hair:'#ff4500'}},
+  // 5 ads — legendary
+  {id:'rainbow_god',name:'Rainbow God',price:0, adUnlock:5, colors:{body:'#ff006e',shirt:'#fb5607',pants:'#ffbe0b',shoe:'#06d6a0',hair:'#4cc9f0'}},
+
 ];
 
 // =============================================
@@ -1827,6 +1844,7 @@ function deleteLevel(i){ const s=getSave(); s.myLevels.splice(i,1); writeSave(s)
 function buildShopUI(){
   const s=getSave();
   const worldsCompleted=Math.floor(s.storyProgress/5); // 0-10
+  if(!s.adProgress) s.adProgress={};
 
   // Auto-grant world-unlock skins the player has earned
   let saveNeeded=false;
@@ -1845,12 +1863,12 @@ function buildShopUI(){
   SKINS.forEach(skin=>{
     if(skin.adminOnly && !isAdmin()) return;
 
-    const section=skin.worldUnlock?'world':'buy';
+    const section=skin.worldUnlock?'world':skin.adUnlock?'ad':'buy';
     if(section!==lastSection){
       lastSection=section;
       const hdr=document.createElement('div');
       hdr.style.cssText='grid-column:1/-1;font-family:Boogaloo,cursive;font-size:18px;color:rgba(255,255,255,0.5);letter-spacing:2px;padding:8px 0 4px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:4px;';
-      hdr.textContent=section==='world'?'🌍 WORLD REWARDS — earn by completing worlds':'🛒 SHOP — buy with coins';
+      hdr.textContent=section==='world'?'🌍 WORLD REWARDS — earn by completing worlds':section==='ad'?'📺 AD REWARDS — watch ads to unlock':'🛒 SHOP — buy with coins';
       grid.appendChild(hdr);
     }
 
@@ -1861,31 +1879,54 @@ function buildShopUI(){
 
     const isOwned=s.owned.includes(skin.id);
     const isEquipped=s.equipped===skin.id;
-    const isLocked=skin.worldUnlock&&!isOwned;
+    const isWorldLocked=!!(skin.worldUnlock&&!isOwned);
+    const isAdLocked=!!(skin.adUnlock&&!isOwned);
+    const isLocked=isWorldLocked||isAdLocked;
 
-    // Draw preview — show 10% peek (blurred, bottom-cropped) if locked, full if owned
-    if(isLocked){
-      // Draw full colour skin first on an offscreen canvas
+    // Draw preview
+    if(isWorldLocked){
       const oc=document.createElement('canvas');oc.width=240;oc.height=240;
       drawSkinPreview(oc,skin);
       const ctx2=sc.getContext('2d');
-      // Fill dark BG
       ctx2.fillStyle='#1a1a2e';ctx2.fillRect(0,0,240,240);
-      // Show only bottom ~10% of the skin (feet/legs) as a teaser
-      const peekH=Math.round(240*0.22); // show 22% so feet+legs visible
+      const peekH=Math.round(240*0.22);
       ctx2.drawImage(oc, 0, 240-peekH, 240, peekH, 0, 240-peekH, 240, peekH);
-      // Heavy fog gradient covering the rest
       const grad=ctx2.createLinearGradient(0,120,0,240);
       grad.addColorStop(0,'rgba(26,26,46,1)');
       grad.addColorStop(0.55,'rgba(26,26,46,0.92)');
       grad.addColorStop(1,'rgba(26,26,46,0.0)');
       ctx2.fillStyle=grad;ctx2.fillRect(0,0,240,240);
-      // Lock icon centred
       ctx2.font='52px sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
-      ctx2.fillStyle='rgba(255,255,255,0.9)';ctx2.fillText('🔒',120,104);
-      // "Unlock in World X" hint
+      ctx2.fillStyle='rgba(255,255,255,0.9)';ctx2.fillText('\u{1F512}',120,104);
       ctx2.font='bold 14px Nunito,sans-serif';ctx2.fillStyle='rgba(255,190,11,0.9)';
       ctx2.fillText('World '+skin.worldUnlock+' unlock',120,158);
+    } else if(isAdLocked){
+      const oc=document.createElement('canvas');oc.width=240;oc.height=240;
+      drawSkinPreview(oc,skin);
+      const ctx2=sc.getContext('2d');
+      ctx2.fillStyle='#1a1a2e';ctx2.fillRect(0,0,240,240);
+      const peekH=Math.round(240*0.45);
+      ctx2.drawImage(oc, 0, 240-peekH, 240, peekH, 0, 240-peekH, 240, peekH);
+      const grad=ctx2.createLinearGradient(0,80,0,240);
+      grad.addColorStop(0,'rgba(26,26,46,1)');
+      grad.addColorStop(0.45,'rgba(26,26,46,0.82)');
+      grad.addColorStop(1,'rgba(26,26,46,0.0)');
+      ctx2.fillStyle=grad;ctx2.fillRect(0,0,240,240);
+      ctx2.font='42px sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
+      ctx2.fillText('\u{1F4FA}',120,86);
+      const watched=s.adProgress[skin.id]||0;
+      const needed=skin.adUnlock;
+      const dotR=7,gap=5,totalW=needed*(dotR*2+gap)-gap;
+      const startX=120-totalW/2+dotR;
+      for(let i=0;i<needed;i++){
+        ctx2.beginPath();
+        ctx2.arc(startX+i*(dotR*2+gap),144,dotR,0,Math.PI*2);
+        ctx2.fillStyle=i<watched?'#ffd700':'rgba(255,255,255,0.18)';
+        ctx2.fill();
+        if(i<watched){ctx2.font='bold 9px sans-serif';ctx2.fillStyle='#12121f';ctx2.fillText('v',startX+i*(dotR*2+gap),144);}
+      }
+      ctx2.font='bold 13px Nunito,sans-serif';ctx2.fillStyle='rgba(255,190,11,0.9)';
+      ctx2.fillText(watched>0?`${watched}/${needed} ads watched`:`Watch ${needed} ad${needed>1?'s':''}`,120,170);
     } else {
       drawSkinPreview(sc,skin);
     }
@@ -1895,27 +1936,43 @@ function buildShopUI(){
     const priceEl=document.createElement('div'); priceEl.className='skin-price';
     if(skin.worldUnlock){
       if(isOwned){
-        priceEl.innerHTML=`<span style="color:#06d6a0;font-size:13px">✓ UNLOCKED</span><br><span style="font-size:10px;color:rgba(255,255,255,0.3)">World ${skin.worldUnlock} reward</span>`;
+        priceEl.innerHTML='<span style="color:#06d6a0;font-size:13px">&#10003; UNLOCKED</span><br><span style="font-size:10px;color:rgba(255,255,255,0.3)">World '+skin.worldUnlock+' reward</span>';
       } else {
         const levelsNeeded=skin.worldUnlock*5;
         const progress=Math.min(s.storyProgress,levelsNeeded);
-        priceEl.innerHTML=`<span style="color:#ffbe0b;font-size:12px">🔒 Complete World ${skin.worldUnlock}</span><br><span style="font-size:10px;color:rgba(255,255,255,0.35)">${progress}/${levelsNeeded} levels done</span>`;
+        priceEl.innerHTML='<span style="color:#ffbe0b;font-size:12px">&#128274; Complete World '+skin.worldUnlock+'</span><br><span style="font-size:10px;color:rgba(255,255,255,0.35)">'+progress+'/'+levelsNeeded+' levels done</span>';
+      }
+    } else if(skin.adUnlock){
+      if(isOwned){
+        priceEl.innerHTML='<span style="color:#06d6a0;font-size:13px">&#10003; UNLOCKED</span><br><span style="font-size:10px;color:rgba(255,255,255,0.3)">Ad reward</span>';
+      } else {
+        const watched=s.adProgress[skin.id]||0;
+        const needed=skin.adUnlock;
+        priceEl.innerHTML='<span style="color:#ffbe0b;font-size:12px">&#128250; '+watched+'/'+needed+' ad'+(needed>1?'s':'')+'</span>';
       }
     } else if(skin.price===0){
       priceEl.textContent='FREE';
     } else {
-      priceEl.textContent='🪙'+skin.price.toLocaleString();
+      priceEl.textContent='\u{1FA99}'+skin.price.toLocaleString();
     }
 
     const btn=document.createElement('button'); btn.className='skin-buy-btn';
     if(isEquipped){
-      btn.textContent='✓ EQUIPPED'; btn.className='skin-buy-btn equipped';
+      btn.textContent='\u2713 EQUIPPED'; btn.className='skin-buy-btn equipped';
     } else if(isOwned){
       btn.textContent='EQUIP'; btn.className='skin-buy-btn equip';
       btn.onclick=()=>equipSkin(skin.id);
-    } else if(isLocked){
+    } else if(isWorldLocked){
       btn.textContent='LOCKED'; btn.className='skin-buy-btn owned';
       btn.disabled=true;
+    } else if(isAdLocked){
+      const watched=s.adProgress[skin.id]||0;
+      const needed=skin.adUnlock;
+      btn.textContent=watched>0?'\u{1F4FA} Watch Ad ('+watched+'/'+needed+')':'\u{1F4FA} Watch Ad';
+      btn.className='skin-buy-btn buy';
+      btn.style.background='linear-gradient(135deg,#f9c74f,#f8961e)';
+      btn.style.color='#12121f';
+      btn.onclick=()=>unlockSkinWithAds(skin);
     } else {
       btn.textContent=skin.price===0?'GET FREE':'BUY';
       btn.className='skin-buy-btn buy';
@@ -2486,6 +2543,45 @@ function buySkin(skin, price){
   showSkinUnlockAnimation(skin, false);
 }
 function equipSkin(id){ const s=getSave(); s.equipped=id; writeSave(s); buildShopUI(); }
+
+function unlockSkinWithAds(skin){
+  const s=getSave();
+  if(!s.adProgress) s.adProgress={};
+  const watched=s.adProgress[skin.id]||0;
+  const needed=skin.adUnlock;
+  // Already fully unlocked — just equip
+  if(s.owned.includes(skin.id)){ equipSkin(skin.id); return; }
+  showRewardedAd(
+    ()=>{ // rewarded callback
+      const s2=getSave();
+      if(!s2.adProgress) s2.adProgress={};
+      s2.adProgress[skin.id]=(s2.adProgress[skin.id]||0)+1;
+      const nowWatched=s2.adProgress[skin.id];
+      if(nowWatched>=needed){
+        if(!s2.owned.includes(skin.id)) s2.owned.push(skin.id);
+        s2.equipped=skin.id;
+        writeSave(s2);
+        buildShopUI(); updateCoinDisplays();
+        showSkinUnlockAnimation(skin,false);
+      } else {
+        writeSave(s2);
+        buildShopUI();
+        const t=document.createElement('div');
+        t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#12121f;border:2px solid #ffd700;color:#ffd700;font-family:Boogaloo,cursive;font-size:18px;padding:10px 22px;border-radius:4px;z-index:99999;pointer-events:none;transition:opacity .4s;';
+        t.textContent=`📺 ${nowWatched}/${needed} ads watched for "${skin.name}"!`;
+        document.body.appendChild(t);
+        setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},2200);
+      }
+    },
+    ()=>{
+      const t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#12121f;border:2px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);font-family:Boogaloo,cursive;font-size:16px;padding:10px 22px;border-radius:4px;z-index:99999;pointer-events:none;transition:opacity .4s;';
+      t.textContent='Ad skipped — no progress saved.';
+      document.body.appendChild(t);
+      setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},1800);
+    }
+  );
+}
 
 // =============================================
 // GAME ENGINE
